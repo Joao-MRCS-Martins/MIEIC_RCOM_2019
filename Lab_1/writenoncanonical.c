@@ -84,7 +84,8 @@ int main(int argc, char** argv)
 
 
 	char buf1[256];
-
+  i = 0;
+  
   while (STOP==FALSE)
   {
     res = read(fd,&buf1[i],1);
