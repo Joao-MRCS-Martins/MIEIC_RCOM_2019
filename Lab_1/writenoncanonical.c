@@ -17,6 +17,7 @@
 
 volatile int STOP=FALSE;
 
+
 int main(int argc, char** argv)
 {
     int fd,c, res;
@@ -85,7 +86,7 @@ int main(int argc, char** argv)
 
 	char buf1[256];
   i = 0;
-  
+
   while (STOP==FALSE)
   {
     res = read(fd,&buf1[i],1);
