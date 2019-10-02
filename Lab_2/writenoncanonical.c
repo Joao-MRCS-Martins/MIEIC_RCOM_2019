@@ -14,15 +14,22 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
+#define FLAG 0b01111110
+#define A 0b00000011
+#define C_SET 0b00000011
+#define C_UA 0b00000111
 
 volatile int STOP=FALSE;
 
+unsigned char bcc_calc(unsigned char a, unsigned char c) {
+	return a^c;
+}
 
 int main(int argc, char** argv)
 {
     int fd,c, res;
     struct termios oldtio,newtio;
-    char buf[255];
+    unsigned char frame[6];
     int i, sum = 0, speed = 0;
 
     if ( (argc < 2) ||
@@ -74,28 +81,30 @@ int main(int argc, char** argv)
     }
 
     printf("New termios structure set\n");
+ 
+	frame[0] = frame[4] = FLAG;
+	frame[1] = A;
+	frame[2] = C_SET;
+	frame[3] = bcc_calc(A,C_SET);
+	
+	res = write(fd, frame, sizeof(frame));
+
+    printf("%d bytes written\n", res);
 
 
-	gets(buf);
+	unsigned char reply[5];
+  	i = 0;
+
+  	while (STOP==FALSE)
+  	{
+    	res = read(fd,&reply[i],1);
+    	
+		if (reply[4]==FLAG)  STOP=TRUE;
+    	i++;
+  	}
 
 
-	res = write(fd, buf, strlen(buf) + 1);
-
-    printf("%d bytes written\n", strlen(buf) + 1);
-
-
-	char buf1[256];
-  i = 0;
-
-  while (STOP==FALSE)
-  {
-    res = read(fd,&buf1[i],1);
-    if (buf1[i]=='\0')  STOP=TRUE;
-    i++;
-  }
-
-
-	printf("\nthis is buf %s\n", buf1);
+	printf("\nthis is buf %s\n", reply);
 
   /*
     O ciclo FOR e as instru��es seguintes devem ser alterados de modo a respeitar
