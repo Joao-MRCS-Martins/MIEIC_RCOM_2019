@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 
 #define BAUDRATE B38400
 #define MODEMDEVICE "/dev/ttyS1"
@@ -18,8 +19,24 @@
 #define A 0b00000011
 #define C_SET 0b00000011
 #define C_UA 0b00000111
+#define MAX_RETRIES 3
+#define TIMEOUT 3
 
 volatile int STOP=FALSE;
+volatile int n_try =0;
+
+void alarmHandler()  {
+	//cenas
+	if(n_try < MAX_RETRIES) {
+		//send_SET();
+		alarm(TIMEOUT);
+		n_try++;
+	}
+	else {
+		printf("MAX TRIES REACHED. EXITING...\n");
+		return;
+	}
+}
 
 unsigned char bcc_calc(unsigned char a, unsigned char c) {
 	return a^c;
@@ -81,14 +98,17 @@ int main(int argc, char** argv)
     }
 
     printf("New termios structure set\n");
- 
+ 	
+	signal(SIGALRM,alarmHandler);
+
 	frame[0] = frame[4] = FLAG;
 	frame[1] = A;
 	frame[2] = C_SET;
 	frame[3] = bcc_calc(A,C_SET);
 	
 	res = write(fd, frame, sizeof(frame));
-
+	//change to send_SET()
+	alarm(TIMEOUT);
     printf("%d bytes written\n", res);
 
 
