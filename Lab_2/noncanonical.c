@@ -15,14 +15,100 @@
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
+#define C_SET 0b00000011
+#define C_UA 0b00000111
+#define A 0x03
+#define FLAG 0x7E
+
+#define START_S 0
+#define FLAG_RCV 1
+#define A_RCV 2
+#define C_RCV 3
+#define BCC_RCV 4
+#define STOP_S 5
 
 volatile int STOP=FALSE;
+//struct Message msg_rcv;
+
+/*
+struct Message {
+    unsigned char a;
+    unsigned char c;
+    unsigned char flag;
+    unsigned char bcc;
+} msg_rcv;
+
+void state_machine(int *state, unsigned char info)
+{
+  switch (state) {
+    case START_S:
+      if(info == FLAG)
+      {
+        msg_rcv.flag = info
+        state = FLAG_RCV;
+      }
+      else if (info == FLAG)
+        state = FLAG_RCV;
+      else
+        state = START_S;
+      break;
+    case FLAG_RCV:
+      if(info == A)
+      {
+        message_rcv.a = info;
+        state = A_RCV;
+      }
+      else if (info == FLAG)
+        state = FLAG_RCV;
+      else
+        state = START_S;
+      break;
+    case A_RCV:
+      if(info == C_SET)
+      {
+        message_rcv.c = info;
+        state = C_RCV;
+      }
+      else if (info == FLAG)
+        state = FLAG_RCV;
+      else
+        state = START_S;
+      break;
+    case C_RCV:
+      if(info == msg_rcv.a^msg_rcv.c )
+      {
+        msg_rcv.bcc = info;
+        state = BCC_RCV;
+      }
+      else if (info == FLAG)
+        state = FLAG_RCV;
+      else
+        state = START_S;
+      break;
+    case BCC_RCV:
+      if( info == FLAG)
+      state =STOP_S;
+      else
+      state = START_S;
+      break;
+    case STOP_S:
+      break;
+    default:
+      state = START_S;
+
+  }
+}
+
+*/
+unsigned char bcc_calc(unsigned char a, unsigned char c) {
+  return a^c;
+}
 
 int main(int argc, char** argv)
 {
     int fd,c, res;
     struct termios oldtio,newtio;
-    char buf[256];
+    unsigned char buf[5];
 
     if ( (argc < 2) ||
   	     ((strcmp("/dev/ttyS0", argv[1])!=0) &&
@@ -77,15 +163,26 @@ int main(int argc, char** argv)
 
     char final[256];
     int i = 0 ;
-
+    int state = 0;
+//READ MESSAGE
     while (STOP==FALSE)
     {
       res = read(fd,&buf[i],1);
-      if (buf[i]=='\0')  STOP=TRUE;
+      printf("%d \n",res);
+      if (buf[4] == FLAG)  STOP=TRUE;
       i++;
+      printf("received %s \n", buf[i]);
+
+    //  state_machine(state,buf[i]);
     }
 
-    printf(":%s:\n", buf);
+
+
+
+
+
+
+//WRITE ANSWER
 
     write(fd,buf,strlen(buf)+1);
 
