@@ -161,18 +161,17 @@ int main(int argc, char** argv)
 
     printf("New termios structure set\n");
 
-    char final[256];
     int i = 0 ;
     int state = 0;
 //READ MESSAGE
     while (STOP==FALSE)
     {
       res = read(fd,&buf[i],1);
-      printf("%d \n",res);
-      if (buf[4] == FLAG)  STOP=TRUE;
-      i++;
-      printf("received %s \n", buf[i]);
+      printf("%d\n",res);
 
+      if (buf[4] == FLAG)  STOP=TRUE;
+      printf("received %u \n", buf[i]);
+      i++;
     //  state_machine(state,buf[i]);
     }
 
