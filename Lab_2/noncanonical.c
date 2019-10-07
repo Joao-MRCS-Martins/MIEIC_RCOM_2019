@@ -100,6 +100,7 @@ void state_machine(int *state, unsigned char info, struct Message *message)
     default:
       *state = START_S;
   }
+  printf("%d\n", *state);
 }
 
 
@@ -111,8 +112,8 @@ int main(int argc, char** argv)
 {
     int fd,c, res;
     struct termios oldtio, newtio;
-    struct Message msg;
     unsigned char buf[5];
+    unsigned char frame[5];
 
     if ( (argc < 2) ||
   	     ((strcmp("/dev/ttyS0", argv[1])!=0) &&
@@ -167,6 +168,7 @@ int main(int argc, char** argv)
 
     int i = 0 ;
     int state = 0;
+    struct Message msg;
 //READ MESSAGE
 
     while (STOP==FALSE)
@@ -174,13 +176,17 @@ int main(int argc, char** argv)
       res = read(fd,&buf[i],1);
       if (buf[4] == FLAG)  STOP=TRUE;
       state_machine(&state, buf[i], &msg);
-      
       i++;
     }
 
 //WRITE ANSWER
 
-    write(fd,buf,strlen(buf)+1);
+    frame[0] = frame[4] = FLAG;
+    frame[1] = A;
+    frame[2] = C_UA;
+    frame[3] = bcc_calc(A, C_UA);
+
+    res = write(fd, frame, sizeof(frame));
 
     sleep(1);
     tcsetattr(fd,TCSANOW,&oldtio);
