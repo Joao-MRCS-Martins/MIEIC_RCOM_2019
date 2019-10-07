@@ -38,64 +38,68 @@ struct Message {
 
 void state_machine(int *state, unsigned char info, struct Message *message)
 {
-
   switch (*state) {
     case START_S:
       if(info == FLAG)
       {
         message->flag = info;
-        state = FLAG_RCV;
+        *state = FLAG_RCV;
       }
       else if (info == FLAG)
-        state = FLAG_RCV;
+        *state = FLAG_RCV;
       else
-        state = START_S;
+        *state = START_S;
       break;
+
     case FLAG_RCV:
       if(info == A)
       {
         message->a = info;
-        state = A_RCV;
+        *state = A_RCV;
       }
       else if (info == FLAG)
-        state = FLAG_RCV;
+        *state = FLAG_RCV;
       else
-        state = START_S;
+        *state = START_S;
       break;
+
     case A_RCV:
       if(info == C_SET)
       {
         message->c = info;
-        state = C_RCV;
+        *state = C_RCV;
       }
       else if (info == FLAG)
-        state = FLAG_RCV;
+        *state = FLAG_RCV;
       else
-        state = START_S;
+        *state = START_S;
       break;
+
     case C_RCV:
       if(info == message->a^message->c )
       {
         message->bcc = info;
-        state = BCC_RCV;
+        *state = BCC_RCV;
       }
       else if (info == FLAG)
-        state = FLAG_RCV;
+        *state = FLAG_RCV;
       else
-        state = START_S;
+        *state = START_S;
       break;
+
     case BCC_RCV:
       if( info == FLAG)
-      state =STOP_S;
+        *state = STOP_S;
       else
-      state = START_S;
+        *state = START_S;
       break;
+
     case STOP_S:
       break;
-    default:
-      state = START_S;
-  }
 
+    default:
+      *state = START_S;
+  }
 }
 
 
@@ -168,23 +172,13 @@ int main(int argc, char** argv)
     while (STOP==FALSE)
     {
       res = read(fd,&buf[i],1);
-      printf("%d\n",res);
-
       if (buf[4] == FLAG)  STOP=TRUE;
-      printf("received %u \n", buf[i]);
+      state_machine(&state, buf[i], &msg);
+      
       i++;
-      state_machine(state,buf[i], &msg);
     }
 
-    printf("hey %d", state);
-
-
-
-
-
-
-
-//WRITE ANSWER 
+//WRITE ANSWER
 
     write(fd,buf,strlen(buf)+1);
 
