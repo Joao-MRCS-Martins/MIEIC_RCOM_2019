@@ -46,7 +46,7 @@ int main(int argc, char** argv)
 {
     int fd,c, res;
     struct termios oldtio,newtio;
-    unsigned char frame[6];
+    unsigned char frame[5];
     int i, sum = 0, speed = 0;
 
     if ( (argc < 2) ||
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
     printf("%d bytes written\n", res);
 
 
-	unsigned char reply[5];
+	/*unsigned char reply[5];
   	i = 0;
 
   	while (STOP==FALSE)
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
   	}
 
 
-	printf("\nthis is buf %s\n", reply);
+	printf("\nthis is buf %s\n", reply);*/
 
   /*
     O ciclo FOR e as instru��es seguintes devem ser alterados de modo a respeitar
