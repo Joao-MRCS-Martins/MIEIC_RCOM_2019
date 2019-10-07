@@ -28,23 +28,22 @@
 #define STOP_S 5
 
 volatile int STOP=FALSE;
-//struct Message msg_rcv;
 
-/*
 struct Message {
     unsigned char a;
     unsigned char c;
     unsigned char flag;
     unsigned char bcc;
-} msg_rcv;
+};
 
-void state_machine(int *state, unsigned char info)
+void state_machine(int *state, unsigned char info, struct Message *message)
 {
-  switch (state) {
+
+  switch (*state) {
     case START_S:
       if(info == FLAG)
       {
-        msg_rcv.flag = info
+        message->flag = info;
         state = FLAG_RCV;
       }
       else if (info == FLAG)
@@ -55,7 +54,7 @@ void state_machine(int *state, unsigned char info)
     case FLAG_RCV:
       if(info == A)
       {
-        message_rcv.a = info;
+        message->a = info;
         state = A_RCV;
       }
       else if (info == FLAG)
@@ -66,7 +65,7 @@ void state_machine(int *state, unsigned char info)
     case A_RCV:
       if(info == C_SET)
       {
-        message_rcv.c = info;
+        message->c = info;
         state = C_RCV;
       }
       else if (info == FLAG)
@@ -75,9 +74,9 @@ void state_machine(int *state, unsigned char info)
         state = START_S;
       break;
     case C_RCV:
-      if(info == msg_rcv.a^msg_rcv.c )
+      if(info == message->a^message->c )
       {
-        msg_rcv.bcc = info;
+        message->bcc = info;
         state = BCC_RCV;
       }
       else if (info == FLAG)
@@ -95,11 +94,11 @@ void state_machine(int *state, unsigned char info)
       break;
     default:
       state = START_S;
-
   }
+
 }
 
-*/
+
 unsigned char bcc_calc(unsigned char a, unsigned char c) {
   return a^c;
 }
@@ -107,7 +106,8 @@ unsigned char bcc_calc(unsigned char a, unsigned char c) {
 int main(int argc, char** argv)
 {
     int fd,c, res;
-    struct termios oldtio,newtio;
+    struct termios oldtio, newtio;
+    struct Message msg;
     unsigned char buf[5];
 
     if ( (argc < 2) ||
@@ -164,6 +164,7 @@ int main(int argc, char** argv)
     int i = 0 ;
     int state = 0;
 //READ MESSAGE
+
     while (STOP==FALSE)
     {
       res = read(fd,&buf[i],1);
@@ -172,8 +173,10 @@ int main(int argc, char** argv)
       if (buf[4] == FLAG)  STOP=TRUE;
       printf("received %u \n", buf[i]);
       i++;
-    //  state_machine(state,buf[i]);
+      state_machine(state,buf[i], &msg);
     }
+
+    printf("hey %d", state);
 
 
 
