@@ -184,7 +184,7 @@ int main(int argc, char** argv)
 
 
 
-//WRITE ANSWER
+//WRITE ANSWER 
 
     write(fd,buf,strlen(buf)+1);
 
