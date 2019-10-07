@@ -22,6 +22,13 @@
 #define MAX_RETRIES 3
 #define TIMEOUT 3
 
+#define START_S 0
+#define FLAG_RCV 1
+#define A_RCV 2
+#define C_RCV 3
+#define BCC_RCV 4
+#define STOP_S 5
+
 volatile int STOP=FALSE;
 volatile int n_try =0;
 
@@ -40,6 +47,80 @@ void alarmHandler()  {
 
 unsigned char bcc_calc(unsigned char a, unsigned char c) {
 	return a^c;
+}
+
+struct Message {
+    unsigned char a;
+    unsigned char c;
+    unsigned char flag;
+    unsigned char bcc;
+};
+
+void state_machine(int *state, unsigned char info, struct Message *message)
+{
+  switch (*state) {
+    case START_S:
+      if(info == FLAG)
+      {
+        message->flag = info;
+        *state = FLAG_RCV;
+      }
+      else if (info == FLAG)
+        *state = FLAG_RCV;
+      else
+        *state = START_S;
+      break;
+
+    case FLAG_RCV:
+      if(info == A)
+      {
+        message->a = info;
+        *state = A_RCV;
+      }
+      else if (info == FLAG)
+        *state = FLAG_RCV;
+      else
+        *state = START_S;
+      break;
+
+    case A_RCV:
+      if(info == C_UA)
+      {
+        message->c = info;
+        *state = C_RCV;
+      }
+      else if (info == FLAG)
+        *state = FLAG_RCV;
+      else
+        *state = START_S;
+      break;
+
+    case C_RCV:
+      if(info == message->a^message->c )
+      {
+        message->bcc = info;
+        *state = BCC_RCV;
+      }
+      else if (info == FLAG)
+        *state = FLAG_RCV;
+      else
+        *state = START_S;
+      break;
+
+    case BCC_RCV:
+      if( info == FLAG)
+        *state = STOP_S;
+      else
+        *state = START_S;
+      break;
+
+    case STOP_S:
+      break;
+
+    default:
+      *state = START_S;
+  }
+  printf("%d\n", *state);
 }
 
 int main(int argc, char** argv)
@@ -109,22 +190,24 @@ int main(int argc, char** argv)
 	res = write(fd, frame, sizeof(frame));
 	//change to send_SET()
 	alarm(TIMEOUT);
-    printf("%d bytes written\n", res);
+  printf("%d bytes written\n", res);
 
 
-	/*unsigned char reply[5];
-  	i = 0;
+	unsigned char reply[5];
+  i = 0;
+  int state = 0;
+  struct Message msg;
 
-  	while (STOP==FALSE)
-  	{
-    	res = read(fd,&reply[i],1);
-    	
-		if (reply[4]==FLAG)  STOP=TRUE;
-    	i++;
-  	}
+  while (STOP==FALSE)
+  {
+    res = read(fd,&reply[i],1);
+    if (reply[4] == FLAG)  STOP=TRUE;
+    state_machine(&state, reply[i], &msg);
+    i++;
+  }
 
 
-	printf("\nthis is buf %s\n", reply);*/
+	//printf("\nthis is buf %s\n", reply);
 
   /*
     O ciclo FOR e as instru��es seguintes devem ser alterados de modo a respeitar
