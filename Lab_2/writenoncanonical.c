@@ -29,19 +29,32 @@
 #define BCC_RCV 4
 #define STOP_S 5
 
+struct Message {
+    unsigned char flag_i;
+    unsigned char a;
+    unsigned char c;
+    unsigned char bcc;
+    unsigned char flag_f;
+};
+
+volatile int UA_RCV=FALSE;
 volatile int STOP=FALSE;
 volatile int n_try =0;
+int fd;
+struct Message SET;
+int send_SET();
 
 void alarmHandler()  {
-	//cenas
+	if(UA_RCV)
+		return;
 	if(n_try < MAX_RETRIES) {
-		//send_SET();
+		int res = send_SET();
 		alarm(TIMEOUT);
 		n_try++;
 	}
 	else {
 		printf("MAX TRIES REACHED. EXITING...\n");
-		return;
+		exit(0);
 	}
 }
 
@@ -49,85 +62,80 @@ unsigned char bcc_calc(unsigned char a, unsigned char c) {
 	return a^c;
 }
 
-struct Message {
-    unsigned char a;
-    unsigned char c;
-    unsigned char flag;
-    unsigned char bcc;
-};
-
 void state_machine(int *state, unsigned char info, struct Message *message)
 {
-  switch (*state) {
-    case START_S:
-      if(info == FLAG)
-      {
-        message->flag = info;
-        *state = FLAG_RCV;
-      }
-      else if (info == FLAG)
-        *state = FLAG_RCV;
-      else
-        *state = START_S;
-      break;
+	switch (*state) {
+		case START_S:
+		  if(info == FLAG)
+		  {
+		    message->flag_i = info;
+		    *state = FLAG_RCV;
+		  }
+		  else
+		    *state = START_S;
+		  break;
 
-    case FLAG_RCV:
-      if(info == A)
-      {
-        message->a = info;
-        *state = A_RCV;
-      }
-      else if (info == FLAG)
-        *state = FLAG_RCV;
-      else
-        *state = START_S;
-      break;
+		case FLAG_RCV:
+		  if(info == A)
+		  {
+		    message->a = info;
+		    *state = A_RCV;
+		  }
+		  else if (info == FLAG)
+		    *state = FLAG_RCV;
+		  else
+		    *state = START_S;
+		  break;
 
-    case A_RCV:
-      if(info == C_UA)
-      {
-        message->c = info;
-        *state = C_RCV;
-      }
-      else if (info == FLAG)
-        *state = FLAG_RCV;
-      else
-        *state = START_S;
-      break;
+		case A_RCV:
+		  if(info == C_UA)
+		  {
+		    message->c = info;
+		    *state = C_RCV;
+		  }
+		  else if (info == FLAG)
+		    *state = FLAG_RCV;
+		  else
+		    *state = START_S;
+		  break;
 
-    case C_RCV:
-      if(info == message->a^message->c )
-      {
-        message->bcc = info;
-        *state = BCC_RCV;
-      }
-      else if (info == FLAG)
-        *state = FLAG_RCV;
-      else
-        *state = START_S;
-      break;
+		case C_RCV:
+		  if(info == message->a^message->c )
+		  {
+		    message->bcc = info;
+		    *state = BCC_RCV;
+		  }
+		  else if (info == FLAG)
+		    *state = FLAG_RCV;
+		  else
+		    *state = START_S;
+		  break;
 
-    case BCC_RCV:
-      if( info == FLAG)
-        *state = STOP_S;
-      else
-        *state = START_S;
-      break;
+		case BCC_RCV:
+		  if( info == FLAG) {
+		message->flag_f = info;
+		    *state = STOP_S;
+		  }
+		  else
+		    *state = START_S;
+		  break;
 
-    case STOP_S:
-      break;
+		case STOP_S:
+		  break;
 
-    default:
-      *state = START_S;
+		default:
+		  *state = START_S;
   }
-  printf("%d\n", *state);
+}
+
+int send_SET() {
+	return write(fd, &SET, sizeof(struct Message));
 }
 
 int main(int argc, char** argv)
 {
-    int fd,c, res;
+    int res;
     struct termios oldtio,newtio;
-    unsigned char frame[5];
     int i, sum = 0, speed = 0;
 
     if ( (argc < 2) ||
@@ -177,50 +185,41 @@ int main(int argc, char** argv)
       perror("tcsetattr");
       exit(-1);
     }
-
-    printf("New termios structure set\n");
  	
 	signal(SIGALRM,alarmHandler);
 
-	frame[0] = frame[4] = FLAG;
-	frame[1] = A;
-	frame[2] = C_SET;
-	frame[3] = bcc_calc(A,C_SET);
+	SET.flag_i = SET.flag_f = FLAG;
+	SET.a = A;
+	SET.c = C_SET;
+	SET.bcc = bcc_calc(A,C_SET);
 	
-	res = write(fd, frame, sizeof(frame));
-	//change to send_SET()
+	res = send_SET();
+	n_try++;
 	alarm(TIMEOUT);
-  printf("%d bytes written\n", res);
+  	printf("%d bytes written\n", res);
 
 
 	unsigned char reply[5];
-  i = 0;
-  int state = 0;
-  struct Message msg;
+  	i = 0;
+  	int state = 0;
+	struct Message UA;
+	
+	
+	while (STOP==FALSE)
+  	{
+   	 res = read(fd,&reply[i],1);
+   	 if (reply[4] == FLAG)  STOP=TRUE;
+   	 state_machine(&state, reply[i], &UA);
+         i++;
+  	}
 
-  while (STOP==FALSE)
-  {
-    res = read(fd,&reply[i],1);
-    if (reply[4] == FLAG)  STOP=TRUE;
-    state_machine(&state, reply[i], &msg);
-    i++;
-  }
-
-
-	//printf("\nthis is buf %s\n", reply);
-
-  /*
-    O ciclo FOR e as instru��es seguintes devem ser alterados de modo a respeitar
-    o indicado no gui�o
-  */
-
-
+	UA_RCV = TRUE;
 
 
     sleep(1);
     if ( tcsetattr(fd,TCSANOW,&oldtio) == -1) {
-      perror("tcsetattr");
-      exit(-1);
+    	perror("tcsetattr");
+    	exit(-1);
     }
 
     close(fd);
