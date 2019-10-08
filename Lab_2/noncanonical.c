@@ -30,11 +30,13 @@
 volatile int STOP=FALSE;
 
 struct Message {
-    unsigned char a;
+	unsigned char flag_i;    
+	unsigned char a;
     unsigned char c;
-    unsigned char flag;
     unsigned char bcc;
+    unsigned char flag_f;
 };
+
 
 void state_machine(int *state, unsigned char info, struct Message *message)
 {
@@ -42,11 +44,9 @@ void state_machine(int *state, unsigned char info, struct Message *message)
     case START_S:
       if(info == FLAG)
       {
-        message->flag = info;
+        message->flag_i = info;
         *state = FLAG_RCV;
       }
-      else if (info == FLAG)
-        *state = FLAG_RCV;
       else
         *state = START_S;
       break;
@@ -59,7 +59,7 @@ void state_machine(int *state, unsigned char info, struct Message *message)
       }
       else if (info == FLAG)
         *state = FLAG_RCV;
-      else
+      else 
         *state = START_S;
       break;
 
@@ -88,8 +88,10 @@ void state_machine(int *state, unsigned char info, struct Message *message)
       break;
 
     case BCC_RCV:
-      if( info == FLAG)
+      if( info == FLAG) {
         *state = STOP_S;
+		message->flag_f = info;	
+	   }
       else
         *state = START_S;
       break;
@@ -164,22 +166,24 @@ int main(int argc, char** argv)
       exit(-1);
     }
 
-    printf("New termios structure set\n");
+   // printf("New termios structure set\n");
 
     int i = 0 ;
     int state = 0;
     struct Message msg;
-//READ MESSAGE
-
+	//READ MESSAGE
     while (STOP==FALSE)
     {
       res = read(fd,&buf[i],1);
+	  printf("Received: 0x%04x ",buf[i]);
       if (buf[4] == FLAG)  STOP=TRUE;
       state_machine(&state, buf[i], &msg);
       i++;
     }
+    	
+	sleep(12);
 
-//WRITE ANSWER
+	//WRITE ANSWER
 
     frame[0] = frame[4] = FLAG;
     frame[1] = A;
