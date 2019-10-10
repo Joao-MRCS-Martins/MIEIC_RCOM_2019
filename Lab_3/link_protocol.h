@@ -1,7 +1,7 @@
 #ifndef _LINK_PROTOCOL_H
 #define _LINK_PROTOCOL_H
 
-#include "defines.h"
+#include "./defines.h"
 
 //protocol functions
 int llopen(int port, int flag);

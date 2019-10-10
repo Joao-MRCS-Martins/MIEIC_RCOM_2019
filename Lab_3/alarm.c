@@ -1,4 +1,10 @@
-#include "alarm.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+#include "./alarm.h"
+#include "./link_protocol.h"
+#include "./defines.h"
 
 int n_try = 0;
 

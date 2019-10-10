@@ -1,4 +1,4 @@
-#include "state_machine_frame.h"
+#include "./state_machine_frame.h"
 
 void state_machine(int *state, unsigned char info, struct Message *message)
 {

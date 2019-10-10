@@ -7,8 +7,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-#include "link_protocol.h"
-#include "alarm.h"
+#include "./link_protocol.h"
+#include "./state_machine_frame.h"
+#include "./alarm.h"
 
 
 struct termios oldtio;
@@ -75,9 +76,9 @@ int llopen(int port, int flag) {
     if(flag == TRANSMITTER) {
         //FILL SET FRAME
         SET.flag_i = SET.flag_f = FLAG;
-        SET.a = A;
+        SET.a = A_SENDER;
         SET.c = C_SET;
-        SET.bcc = bcc_calc(A,C_SET);
+        SET.bcc = bcc_calc(SET.a,SET.c);
         
         send_SET();
         alarm(TIMEOUT);               
@@ -94,11 +95,11 @@ int llopen(int port, int flag) {
     if (flag == RECEIVER) {
         //FILL UA FRAME
         UA.flag_i = UA.flag_f = FLAG;
-	    UA.a = A;
+	    UA.a = A_SENDER;
 	    UA.c = C_UA;
-	    UA.bcc = bcc_calc(A,C_UA);
+	    UA.bcc = bcc_calc(UA.a,UA.c);
 
-        write(fd,&UA,sizeof(Message))
+        write(fd,&UA,sizeof(struct Message));
     }
     
     return fd;
@@ -108,4 +109,9 @@ int llwrite(int fd, char *buffer, int length) {
     int n_written;
 
     return n_written;
+}
+
+int main() {
+    //just for compilation
+    return 0;
 }
