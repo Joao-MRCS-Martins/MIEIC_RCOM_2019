@@ -30,6 +30,20 @@
 //EXECUTION SPECS
 #define MAX_RETRIES 3
 #define TIMEOUT 3
+#define MAX_BUFF 255
+
+//SERIAL PORTS
+#define ttyS0 0
+#define ttyS1 1
+#define ttyS2 2
+
+//ACTOR MODE
+#define TRANSMITTER 0
+#define RECEIVER 1
+
+//ERROR MESSAGES
+#define INVALID_PORT -1
+#define INVALID_ACTOR -2
 
 struct Message {
 	unsigned char flag_i;    
