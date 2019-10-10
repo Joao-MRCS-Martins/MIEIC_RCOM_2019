@@ -1,3 +1,5 @@
+#ifndef _DEFINES_H_
+#define _DEFINES_H_
 
 //HARDWARE
 #define BAUDRATE B38400
@@ -28,3 +30,14 @@
 //EXECUTION SPECS
 #define MAX_RETRIES 3
 #define TIMEOUT 3
+
+struct Message {
+	unsigned char flag_i;    
+	unsigned char a;
+    unsigned char c;
+    unsigned char bcc;
+    unsigned char info[256];
+    unsigned char flag_f;
+};
+
+#endif //_DEFINES_H_
