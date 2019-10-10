@@ -9,25 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
-
-#define BAUDRATE B38400
-#define MODEMDEVICE "/dev/ttyS1"
-#define _POSIX_SOURCE 1 /* POSIX compliant source */
-#define FALSE 0
-#define TRUE 1
-#define FLAG 0b01111110
-#define A 0b00000011
-#define C_SET 0b00000011
-#define C_UA 0b00000111
-#define MAX_RETRIES 3
-#define TIMEOUT 3
-
-#define START_S 0
-#define FLAG_RCV 1
-#define A_RCV 2
-#define C_RCV 3
-#define BCC_RCV 4
-#define STOP_S 5
+#include "defines.h"
 
 struct Message {
     unsigned char flag_i;
