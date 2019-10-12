@@ -7,10 +7,22 @@
 #include "./defines.h"
 
 int n_try = 0;
+int send = 0;
 
-void alarmHandler()  {
+void alarmHandler(int sig)  {
 	if(n_try < MAX_RETRIES) {
-		int res = send_SET();
+		switch(sig)
+		{
+			case 0:
+				send_SET();
+				break;
+			case 1:
+				send_DISC();
+				break;
+			case 2: 
+				send_UA();
+				break;
+		}
 		alarm(TIMEOUT);
 		n_try++;
 	}
@@ -18,4 +30,11 @@ void alarmHandler()  {
 		printf("MAX TRIES REACHED. EXITING...\n");
 		exit(0);
 	}
+}
+
+void alarmHandlerR()  {
+	
+	printf("TIMEOUT. EXITING...\n");
+	exit(0);
+
 }

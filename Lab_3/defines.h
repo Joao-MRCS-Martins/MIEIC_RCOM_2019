@@ -18,6 +18,7 @@
 //CONTROL FIELD
 #define C_SET 0b00000011
 #define C_UA 0b00000111
+#define C_DISC 0b00001011
 
 //STATE MACHINE
 #define START_S 0
@@ -30,6 +31,7 @@
 //EXECUTION SPECS
 #define MAX_RETRIES 3
 #define TIMEOUT 3
+#define TIMEOUT_R 10
 #define MAX_BUFF 255
 
 //SERIAL PORTS
