@@ -14,5 +14,6 @@ int send_SET();
 int send_DISC();
 int send_UA();
 unsigned char bcc_calc(unsigned char a, unsigned char c);
+void alarmHandler();
 
 #endif 
