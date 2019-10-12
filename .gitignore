@@ -1,3 +1,10 @@
+# All binary files must be ignored
+*
+!*.*
+!*/
+*.vscode
+
+*.depend
 # Prerequisites
 *.d
 
