@@ -1,12 +1,12 @@
 #include "./state_machine_frame.h"
 
-void state_machine(int *state, unsigned char info, struct Message *message)
+
+void state_machine(int *state, unsigned char info, struct Header_Fields *message)
 {
 	switch (*state) {
 		case START_S:
 		  if(info == FLAG)
 		  {
-		    message->flag_i = info;
 		    *state = FLAG_RCV;
 		  }
 		  else
@@ -14,9 +14,9 @@ void state_machine(int *state, unsigned char info, struct Message *message)
 		  break;
 
 		case FLAG_RCV:
-		  if(info == A_RECIEVER)
+		  if(info == message->A_EXCT)
 		  {
-		    message->a = info;
+			message->A_READ = info;
 		    *state = A_RCV;
 		  }
 		  else if (info == FLAG)
@@ -26,9 +26,9 @@ void state_machine(int *state, unsigned char info, struct Message *message)
 		  break;
 
 		case A_RCV:
-		  if(info == C_UA)
+		  if(info == message->C_EXCT)
 		  {
-		    message->c = info;
+			message->C_READ = info;
 		    *state = C_RCV;
 		  }
 		  else if (info == FLAG)
@@ -38,9 +38,8 @@ void state_machine(int *state, unsigned char info, struct Message *message)
 		  break;
 
 		case C_RCV:
-		  if(info == message->a^message->c )
+		  if(info == message->A_READ^message->C_READ)
 		  {
-		    message->bcc = info;
 		    *state = BCC_RCV;
 		  }
 		  else if (info == FLAG)
@@ -49,8 +48,8 @@ void state_machine(int *state, unsigned char info, struct Message *message)
 		    *state = START_S;
 		  break;
 		case BCC_RCV:
-		  if( info == FLAG) {
-		message->flag_f = info;
+		  if(info == FLAG) {
+			alarm(0);
 		    *state = STOP_S;
 		  }
 		  else

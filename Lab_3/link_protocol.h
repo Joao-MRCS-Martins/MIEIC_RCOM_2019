@@ -12,5 +12,6 @@ int llclose(int fd);
 //helper functions
 int send_SET();
 unsigned char bcc_calc(unsigned char a, unsigned char c);
+void alarmHandler();
 
 #endif 
