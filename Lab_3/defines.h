@@ -26,7 +26,7 @@
 #define RR_R1 0x85
 #define REJ_R0 0x01
 #define REJ_R1 0x81
-#define DISC 0x0B
+#define C_DISC 0x0B
 
 //STATE MACHINE
 #define START_S 0

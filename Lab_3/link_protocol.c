@@ -28,18 +28,20 @@ void alarmHandler(int sig)  {
 	printf("Alarm nº%d\n",n_try);
 }
 
+void alarmHandlerR(int sig)  {
+	printf("Timeout. exiting ...\n");
+    exit(0);
+}
+
 int send_SET() {
-    send = 0;
 	return write(fd, &SET, sizeof(struct Message));
 }
 
 int send_DISC() {
-    send = 1;
 	return write(fd, &DISC, sizeof(struct Message));
 }
 
 int send_UA() {
-    send = 2;
 	return write(fd, &DISC, sizeof(struct Message));
 }
 
