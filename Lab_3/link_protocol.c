@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 struct termios oldtio;
-struct Message message;
+struct control_frame message;
 
 int fd;
 int n_try = 0;
@@ -33,17 +33,46 @@ void alarmHandlerR(int sig)  {
 
 /*this needs to change to a generic one*/
 int send_message() {
-	return write(fd, &message, sizeof(struct Message));
+	return write(fd, &message, sizeof(struct control_frame));
 }
 
 unsigned char bcc_calc(unsigned char a, unsigned char c) {
 	return a^c;
 }
 
+unsigned char bcc2_calc(unsigned char* message, int length) {
+    unsigned char bcc2 = message[0];
+    for(int i =1;i<length;i++) {
+        bcc2 ^= message[i];
+    }
+
+    return bcc2;
+}
+
+unsigned char* bcc2_stuffing(unsigned char bcc2, int *size) {
+    unsigned char* bcc2_stuffed;
+    if(bcc2 == FLAG) {
+        bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
+        strcpy(bcc2_stuffed,FLAG_ESC);
+        *size = 2;
+    }
+    else if(bcc2 == ESCAPE) {
+        bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
+        strcpy(bcc2_stuffed,ESC_ESC);
+        *size = 2;
+    }
+    else {
+        *size = 1;
+        return &bcc2;
+    }
+
+    return bcc2_stuffed;
+}
+
 int llopen(int port, int flag) {
     char port_path [MAX_BUFF];
     struct termios newtio;
-    struct Message UA;
+    struct control_frame UA;
     struct Header_Fields header;
     unsigned char aux; 
     int state = 0;
@@ -139,7 +168,7 @@ int llopen(int port, int flag) {
 	    message.c = C_UA;
 	    message.bcc = bcc_calc(message.a,message.c);
 
-        write(fd,&message,sizeof(struct Message));
+        write(fd,&message,sizeof(struct control_frame));
     }
     
     return fd;
@@ -147,7 +176,14 @@ int llopen(int port, int flag) {
 
 int llwrite(int fd, char *buffer, int length) {
     int n_written;
-
+    //montar cabecalho FLAG A C BCC1
+    //calcular bcc2 com dados atuais
+    //fazer stuffing do pacote de dados
+    //montar frame de informacao (cabecalho dados bcc2 flag)
+    //enviar
+    //esperar pela resposta
+    //se ocorrer timeout ou se receber REJ retransmitir
+    //se tentar MAX_RETRIES vezes retornar com erro 
     return n_written;
 }
 
@@ -169,7 +205,7 @@ int llread(int fd, char *info)
     int state = 0;
     int flag_answer = 0;
 
-    struct Message message;
+    struct control_frame message;
     struct Header_Fields fields;
 
     fields.A_EXCT = A_SENDER;
@@ -199,7 +235,7 @@ int llread(int fd, char *info)
         message.c = REJ_R0;
         message.bcc = bcc_calc(message.a,message.c);
     }
-        write(fd,&message, sizeof(struct Message)); 
+        write(fd,&message, sizeof(struct control_frame)); 
     
     
     return 0;
@@ -259,7 +295,7 @@ int llclose(int fd,int flag)
         message.flag_i = message.flag_f = FLAG;
 
         //implement several tries
-        write(fd, &message, sizeof(struct Message));
+        write(fd, &message, sizeof(struct control_frame));
         i =0;
         while (STOP==FALSE)
         {
