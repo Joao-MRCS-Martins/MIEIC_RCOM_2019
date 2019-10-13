@@ -156,8 +156,7 @@ int llwrite(int fd, char *buffer, int length) {
   // int n_written;
   struct info_frame message;
 
-  // setup frame header
-  message.flag_i = FLAG;
+    message.flag_i = message.flag_f = FLAG;
   message.a = A_SENDER;
   if (n_seq == 0) // check sequence number
     message.c = C_S0;
@@ -171,9 +170,7 @@ int llwrite(int fd, char *buffer, int length) {
   message.bcc2 = bcc2_stuffed;
 
     //byte stuffing on file data
-    int stuffed_size;
-    message.data = data_stuffing(buffer, length, &stuffed_size);
-    message.data_size = stuffed_size;
+    message.data = data_stuffing(buffer, length, &message.data_size);
 
   n_seq ^= 1; // PLACE WHERE RR IS CORRECTLY RECEIVED
 

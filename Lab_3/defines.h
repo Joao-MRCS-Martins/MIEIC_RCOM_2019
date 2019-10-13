@@ -80,7 +80,7 @@ struct info_frame {
   unsigned char c;
   unsigned char bcc1;
   unsigned char *data;
-  unsigned data_size;
+    int data_size;
   unsigned char *bcc2;
   unsigned char flag_f;
 };
