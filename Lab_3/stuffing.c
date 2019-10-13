@@ -20,29 +20,29 @@ unsigned char *bcc2_stuffing(unsigned char *bcc2) {
     return bcc2_stuffed;
 }
 
-unsigned char *data_stuffing(unsigned char* data, int size){
-  int final_size = size;
-  for(; *data != '\0'; data++){
-    if(*data == ESCAPE || *data == FLAG)
-      final_size++;
-  }
-  printf("%d\n", final_size);
-  unsigned char ret_vect[final_size];
-  printf("%lu\n", sizeof(ret_vect));
-  unsigned char * p = ret_vect;
-  for(; *p != '\0'; p++){
-    if(*p == ESCAPE){
-      p++;
-      *p = ESCAPE ^ 0x20;
-    }
-    else if(*p == FLAG){
-      *p = ESCAPE;
-      p++;
-      *p = FLAG ^ 0x20;
-    }
-  }
+unsigned char *data_stuffing(unsigned char* data, unsigned size, unsigned *final_size){
+  *final_size = size;
+  unsigned char *stuffed_data = (unsigned char *) malloc(size * sizeof(unsigned char));
   
-  for(long unsigned int i = 0; i < sizeof(ret_vect); i++){
-    printf("%u\n", ret_vect[i]);
+  int j = 0;//current position on stuffed array
+  for(int i = 0; i < size; i++){
+    if(data[i] == ESCAPE) {
+      stuffed_data = (unsigned char *) realloc(stuffed_data,++(*final_size));
+      stuffed_data[j] = ESCAPE;
+      stuffed_data[j+1] = ESC_ESC;
+      j +=2;
+    }
+    else if (data[i] == FLAG) {
+      stuffed_data = (unsigned char *) realloc(stuffed_data,++(*final_size));
+      stuffed_data[j] = ESCAPE;
+      stuffed_data[j+1] = ESC_ESC;
+      j +=2;
+    }
+    else {
+      stuffed_data[j] = data[i];
+      j++;
+    } 
   }
+
+  return stuffed_data;
 }

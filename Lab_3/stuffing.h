@@ -4,6 +4,6 @@
 #include "defines.h"
 
 unsigned char* bcc2_stuffing(unsigned char *bcc2);
-unsigned char *data_stuffing(unsigned char* data, int size);
+unsigned char *data_stuffing(unsigned char* data, unsigned size, unsigned *final_size);
 
 #endif 

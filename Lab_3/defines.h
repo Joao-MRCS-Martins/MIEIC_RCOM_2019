@@ -12,7 +12,6 @@
 
 //FRAME
 #define FLAG 0x7E
-#define ESCAPE 0x7d
 
 // ADDRESS FIELD
 #define A_RECEIVER 0x01
@@ -30,8 +29,9 @@
 #define C_DISC 0x0B
 
 //ESCAPE OCTETS
-#define FLAG_ESC 0x7D5E
-#define ESC_ESC 0x7D5D
+#define ESCAPE 0x7d
+#define FLAG_ESC 0x5E
+#define ESC_ESC 0x5D
 
 //STATE MACHINE
 #define START_S 0
@@ -83,7 +83,7 @@ struct info_frame {
     unsigned char c;
     unsigned char bcc1;
     unsigned char* data;
-    unsigned int data_size;
+    unsigned data_size;
     unsigned char* bcc2;
     unsigned char flag_f;
 };

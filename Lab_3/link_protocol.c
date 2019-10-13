@@ -174,7 +174,9 @@ int llwrite(int fd, char *buffer, int length) {
     message.bcc2 = bcc2_stuffed;
 
     //byte stuffing on file data
-    message.data = data_stuffing(buffer,length);
+    unsigned stuffed_size;
+    message.data = data_stuffing(buffer,length,&stuffed_size);
+    message.data_size = stuffed_size;
     
     n_seq ^= 1;     //PLACE WHERE RR IS CORRECTLY RECEIVED
 
