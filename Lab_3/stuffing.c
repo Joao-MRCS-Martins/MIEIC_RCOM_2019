@@ -47,7 +47,7 @@ unsigned char *data_stuffing(char* data, int size, int *final_size) {
   return stuffed_data;
 }
 
-unsigned char *data_distuffing(unsigned char *data, int size, unsigned *final_size) {
+unsigned char *data_destuffing(unsigned char *data, int size, unsigned *final_size) {
   *final_size = size;
   unsigned char *stuffed_data =
       (unsigned char *)malloc(size * sizeof(unsigned char));
@@ -66,7 +66,7 @@ unsigned char *data_distuffing(unsigned char *data, int size, unsigned *final_si
   return stuffed_data;
 }
 
-unsigned char *bcc2_distuffing(unsigned char *bcc2) {
+unsigned char *bcc2_destuffing(unsigned char *bcc2) {
   unsigned char *bcc2_stuffed;
 
   if (bcc2[0] == ESCAPE) {

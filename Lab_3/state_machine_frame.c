@@ -1,7 +1,6 @@
 #include "./state_machine_frame.h"
 
-void state_machine(int *state, unsigned char info,
-                   struct Header_Fields *message) {
+void state_machine(int *state, unsigned char info, struct header_fields *message) {
   switch (*state) {
   case START_S:
     if (info == FLAG) {
@@ -53,8 +52,7 @@ void state_machine(int *state, unsigned char info,
   }
 }
 
-void state_machine_I(int *state, unsigned char info,
-                     unsigned char *packets, unsigned char *bcc_data, int C) {
+void state_machine_I(int *state, unsigned char info, unsigned char *packets, unsigned char *bcc_data, int C) {
   int i = 0;
   int j = 0;
   unsigned char aux1;
@@ -115,7 +113,7 @@ void state_machine_I(int *state, unsigned char info,
     } else {
 
       unsigned final_size;
-      if (aux1 = ESCAPE) {
+      if (aux1 == ESCAPE) {
         bcc_data[0] = aux1;
         bcc_data[1] = aux2;
       } else {

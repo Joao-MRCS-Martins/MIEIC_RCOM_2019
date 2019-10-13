@@ -4,7 +4,7 @@
 #include "./defines.h"
 #include <unistd.h>
 
-struct Header_Fields {
+struct header_fields {
   // The A & C values read
   unsigned char A_READ;
   unsigned char C_READ;
@@ -13,8 +13,7 @@ struct Header_Fields {
   unsigned char C_EXCT;
 };
 
-void state_machine(int *state, unsigned char info,
-                   struct Header_Fields *message);
+void state_machine(int *state, unsigned char info, struct header_fields *message);
 void state_machine_I(int *state, unsigned char info,
                      unsigned char *packets, unsigned char *bcc_data, int C);
 

@@ -21,7 +21,7 @@ int n_try = 0;
 int alrmSet = FALSE;
 int n_seq = 0;
 
-unsigned char *bcc2_calc(unsigned char *message, int length) {
+unsigned char *bcc2_calc(char *message, int length) {
   unsigned char *bcc2 = (unsigned char *)malloc(sizeof(unsigned char));
   *bcc2 = message[0];
   for (int i = 1; i < length; i++) {
@@ -51,10 +51,9 @@ int llopen(int port, int flag) {
   char port_path[MAX_BUFF];
   struct termios newtio;
   struct control_frame UA;
-  struct Header_Fields header;
+  struct header_fields header;
   unsigned char aux;
   int state = 0;
-  int i = 0;
 
   signal(SIGALRM, alarmHandler);
 
@@ -112,11 +111,10 @@ int llopen(int port, int flag) {
       send_message();
       alarm(TIMEOUT);
       alrmSet = FALSE;
-      i = 0;
+
       while (!alrmSet && state != STOP_S) {
         read(fd, &aux, 1);
         state_machine(&state, aux, &header);
-        i++;
       }
 
       if (state == STOP_S)
@@ -138,7 +136,6 @@ int llopen(int port, int flag) {
 
       read(fd, &aux, 1);
       state_machine(&state, aux, &header);
-      i++;
     }
     // FILL UA FRAME
     message.flag_i = UA.flag_f = FLAG;
@@ -153,10 +150,13 @@ int llopen(int port, int flag) {
 }
 
 int llwrite(int fd, char *buffer, int length) {
-  // int n_written;
+  
   struct info_frame message;
+	struct header_fields header;
+  unsigned char aux;
+  int state = 0;
 
-    message.flag_i = message.flag_f = FLAG;
+  message.flag_i = message.flag_f = FLAG;
   message.a = A_SENDER;
   if (n_seq == 0) // check sequence number
     message.c = C_S0;
@@ -169,19 +169,38 @@ int llwrite(int fd, char *buffer, int length) {
   unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2);
   message.bcc2 = bcc2_stuffed;
 
-    //byte stuffing on file data
-    message.data = data_stuffing(buffer, length, &message.data_size);
+  //byte stuffing on file data
+  message.data = data_stuffing(buffer, length, &message.data_size);
 
-  n_seq ^= 1; // PLACE WHERE RR IS CORRECTLY RECEIVED
 
-  // fazer stuffing do pacote de dados
-  // montar frame de informacao (cabecalho dados bcc2 flag)
-  write(fd, &message, sizeof(struct info_frame));
-  // esperar pela resposta
-  // processar resposta
-  // se ocorrer timeout ou se receber REJ retransmitir
-  // se tentar MAX_RETRIES vezes retornar com erro
-  return 0;
+	//prepare reply processing
+	header.A_EXCT = A_SENDER;
+	header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
+	n_try = 0;
+
+  do {
+      
+		write(fd, &message, sizeof(struct info_frame));
+    alrmSet = FALSE;
+    alarm(TIMEOUT);
+		
+    while (!alrmSet && state != STOP_S) {
+      read(fd, &aux, 1);
+      state_machine(&state, aux, &header);
+			if((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
+				break;
+    }
+
+    if (state == STOP_S)
+      break;
+  } while (n_try < MAX_RETRIES);
+
+  if (n_try == MAX_RETRIES)
+    return TIMEOUT_ERROR;
+  
+	n_seq ^= 1; // PLACE WHERE RR IS CORRECTLY RECEIVED
+  
+	return length;
 }
 
 volatile int STOP = FALSE;
@@ -207,8 +226,8 @@ int llread(int fd, char *info) {
   }
 
   unsigned *final_size;
-  bcc2_distuffing(bcc_data);
-  data_distuffing(packets,sizeof(packets),final_size);
+  bcc2_destuffing(bcc_data);
+  data_destuffing(packets,sizeof(packets),final_size);
 
   if(bcc_data == bcc2_calc(packets, strlen((const char*)packets)))
   {
@@ -240,7 +259,7 @@ int llclose(int fd, int flag) {
   unsigned char buffer;
 
   if (flag == TRANSMITTER) {
-    struct Header_Fields fields;
+    struct header_fields fields;
 
     fields.A_EXCT = A_RECEIVER;
     fields.C_EXCT = C_DISC;
@@ -284,7 +303,7 @@ int llclose(int fd, int flag) {
   }
 
   if (flag == RECEIVER) {
-    struct Header_Fields fields;
+    struct header_fields fields;
 
     fields.A_EXCT = A_SENDER;
     fields.C_EXCT = C_DISC; // can change
