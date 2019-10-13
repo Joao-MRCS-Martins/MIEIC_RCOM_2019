@@ -303,8 +303,9 @@ int llclose(int fd, int flag)
         message.bcc = bcc_calc(message.a, message.c);
         message.flag_i = message.flag_f = FLAG;
 
-        //implement several tries
         write(fd, &message, sizeof(struct control_frame));
+        alarm(TIMEOUT_R);
+        
         while (state != STOP_S) {
             alarm(TIMEOUT_R);
             read(fd, &buffer, 1);
