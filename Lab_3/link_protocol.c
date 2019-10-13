@@ -322,13 +322,11 @@ int llclose(int fd, int flag)
     return 0;
 }
 
-int main()
-{
-    unsigned char* bcc2 = (unsigned char*)malloc(sizeof(unsigned char));
-    *bcc2 = ESCAPE;
+int main() {
+    unsigned char *bcc2 = (unsigned char*) malloc(sizeof(unsigned char));
+    *bcc2 = FLAG;
     unsigned char * stuffed = bcc2_stuffing(bcc2);
-    if(stuffed == NULL) {
-        printf("No stuffing needed. BCC: %s\n",bcc2);
-    }
-    return 0;
+    printf("BCC stuffed: %x%x\n",stuffed[0],stuffed[1]);
+    
+		return 0;
 }
