@@ -311,7 +311,8 @@ int llclose(int fd,int flag) {
 }
 
 int main() {
-    unsigned char bcc2 = ESCAPE;
+    unsigned char *bcc2 = (unsigned char*) malloc(sizeof(unsigned char));
+    *bcc2 = ESCAPE;
     unsigned char * stuffed = bcc2_stuffing(bcc2);
     if(stuffed == NULL) {
         printf("No stuffing needed. BCC: %x\n",bcc2);
