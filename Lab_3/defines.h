@@ -11,7 +11,7 @@
 #define TRUE 1
 
 //FRAME
-#define FLAG 0x7
+#define FLAG 0x7E
 #define ESCAPE 0x7d
 
 // ADDRESS FIELD

@@ -311,13 +311,12 @@ int llclose(int fd,int flag)
     return 0;
 }
 
-
 int main() {
-    unsigned char bcc2 = FLAG;
+    unsigned char bcc2 = 0x45;
     int size;
     unsigned char * stuffed = bcc2_stuffing(bcc2,&size);
     if(stuffed == NULL) {
-        printf("No stuffing needed.\n");
+        printf("No stuffing needed. BCC: %x\n",bcc2);
     }
     else {
        printf("BCC stuffed: %s Size: %d\n",stuffed,size);
