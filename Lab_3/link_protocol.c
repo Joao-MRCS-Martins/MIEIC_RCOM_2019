@@ -19,16 +19,15 @@ int n_try = 0;
 int alrmSet = FALSE;
 int n_seq = 0;
 
-void alarmHandler(int sig)
-{
+
+void alarmHandler()  {
     alrmSet = TRUE;
     n_try++;
     printf("Alarm nº%d\n", n_try);
 }
 
-void alarmHandlerR(int sig)
-{
-    printf("Timeout. exiting ...\n");
+void alarmHandlerR()  {
+	printf("Timeout. exiting ...\n");
     exit(0);
 }
 
@@ -43,9 +42,8 @@ unsigned char bcc_calc(unsigned char a, unsigned char c)
     return a ^ c;
 }
 
-unsigned char* bcc2_calc(unsigned char* message, int length)
-{
-    unsigned char* bcc2 = (unsigned char*)malloc(sizeof(unsigned char));
+unsigned char* bcc2_calc( char* message, int length) {
+    unsigned char *bcc2 = (unsigned char *) malloc(sizeof(unsigned char));
     *bcc2 = message[0];
     for (int i = 1; i < length; i++) {
         *bcc2 ^= message[i];
@@ -160,9 +158,8 @@ int llopen(int port, int flag)
     return fd;
 }
 
-int llwrite(int fd, unsigned char* buffer, int length)
-{
-    int n_written;
+int llwrite(int fd, char *buffer, int length) {
+    //int n_written;
     struct info_frame message;
 
     //setup frame header
@@ -184,16 +181,18 @@ int llwrite(int fd, unsigned char* buffer, int length)
     message.data = data_stuffing(buffer, length, &stuffed_size);
     message.data_size = stuffed_size;
 
+    n_seq ^= 1;     //PLACE WHERE RR IS CORRECTLY RECEIVED
+
     n_seq ^= 1; //PLACE WHERE RR IS CORRECTLY RECEIVED
 
     //fazer stuffing do pacote de dados
     //montar frame de informacao (cabecalho dados bcc2 flag)
-    //enviar
+    write(fd,&message,sizeof(struct info_frame));
     //esperar pela resposta
     //processar resposta
     //se ocorrer timeout ou se receber REJ retransmitir
-    //se tentar MAX_RETRIES vezes retornar com erro
-    return n_written;
+    //se tentar MAX_RETRIES vezes retornar com erro 
+    return 0;
 }
 
 volatile int STOP = FALSE;
@@ -326,11 +325,9 @@ int main()
 {
     unsigned char* bcc2 = (unsigned char*)malloc(sizeof(unsigned char));
     *bcc2 = ESCAPE;
-    unsigned char* stuffed = bcc2_stuffing(bcc2);
-    if (stuffed == NULL) {
-        printf("No stuffing needed. BCC: %x\n", bcc2);
-    } else {
-        printf("BCC stuffed: %s\n", stuffed);
+    unsigned char * stuffed = bcc2_stuffing(bcc2);
+    if(stuffed == NULL) {
+        printf("No stuffing needed. BCC: %s\n",bcc2);
     }
     return 0;
 }
