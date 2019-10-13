@@ -29,6 +29,10 @@
 #define REJ_R1 0x81
 #define C_DISC 0x0B
 
+//ESCAPE OCTETS
+#define FLAG_ESC 0x7D5E
+#define ESC_ESC 0x7D5D
+
 //STATE MACHINE
 #define START_S 0
 #define FLAG_RCV 1
@@ -65,13 +69,24 @@
 #define INVALID_ACTOR -2
 #define TIMEOUT_ERROR -3
 
-struct Message {
+struct control_frame {
 	unsigned char flag_i;    
 	unsigned char a;
     unsigned char c;
     unsigned char bcc;
-    unsigned char info[256];
     unsigned char flag_f;
 };
+
+struct info_frame {
+    unsigned char flag_i;    
+	unsigned char a;
+    unsigned char c;
+    unsigned char bcc1;
+    unsigned char* data;
+    unsigned int data_size;
+    unsigned char bcc2;
+    unsigned char flag_f;
+};
+
 
 #endif //_DEFINES_H_
