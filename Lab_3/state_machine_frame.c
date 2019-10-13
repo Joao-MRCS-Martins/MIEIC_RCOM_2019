@@ -58,8 +58,7 @@ void state_machine(int *state, unsigned char info, struct Header_Fields *message
     }
 }
 
-void state_machine_I(int* state, unsigned char info, struct Header_Fields* message, unsigned char* packets, int answer_flag)
-{
+void state_machine_I(int* state, unsigned char info, struct Header_Fields* message, unsigned char* packets, int answer_flag) {
     int i = 0;
     unsigned char aux;
     //unsigned char bcc_data;
