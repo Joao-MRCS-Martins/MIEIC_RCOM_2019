@@ -20,13 +20,13 @@ int alrmSet = FALSE;
 int n_seq = 0;
 
 
-void alarmHandler(int sig)  {
+void alarmHandler()  {
     alrmSet = TRUE;
     n_try++;
 	printf("Alarm nº%d\n",n_try);
 }
 
-void alarmHandlerR(int sig)  {
+void alarmHandlerR()  {
 	printf("Timeout. exiting ...\n");
     exit(0);
 }
@@ -182,7 +182,7 @@ int llwrite(int fd, char *buffer, int length) {
 
     //fazer stuffing do pacote de dados
     //montar frame de informacao (cabecalho dados bcc2 flag)
-    //enviar
+    write(fd,&message,sizeof(struct info_frame));
     //esperar pela resposta
     //processar resposta
     //se ocorrer timeout ou se receber REJ retransmitir
@@ -317,7 +317,7 @@ int main() {
     *bcc2 = ESCAPE;
     unsigned char * stuffed = bcc2_stuffing(bcc2);
     if(stuffed == NULL) {
-        printf("No stuffing needed. BCC: %hhn\n",bcc2);
+        printf("No stuffing needed. BCC: %s\n",bcc2);
     }
     else {
        printf("BCC stuffed: %s\n",stuffed);

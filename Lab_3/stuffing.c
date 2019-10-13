@@ -7,11 +7,13 @@ unsigned char *bcc2_stuffing(unsigned char *bcc2) {
     unsigned char* bcc2_stuffed;
     if(*bcc2 == FLAG) {
         bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
-        sprintf(bcc2_stuffed,"%x",FLAG_ESC);
+        bcc2_stuffed[0] = ESCAPE;
+        bcc2_stuffed[1] = FLAG_ESC;
     }
     else if(*bcc2 == ESCAPE) {
         bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
-       sprintf(bcc2_stuffed,"%x",ESC_ESC);
+        bcc2_stuffed[0] = ESCAPE;
+        bcc2_stuffed[1] = ESC_ESC;
     }
     else {
         bcc2_stuffed = bcc2;
@@ -20,7 +22,7 @@ unsigned char *bcc2_stuffing(unsigned char *bcc2) {
     return bcc2_stuffed;
 }
 
-unsigned char *data_stuffing(char* data, unsigned size, unsigned *final_size) {
+unsigned char *data_stuffing(char* data, int size, unsigned *final_size) {
   *final_size = size;
   unsigned char *stuffed_data = (unsigned char *) malloc(size * sizeof(unsigned char));
   
