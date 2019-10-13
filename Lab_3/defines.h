@@ -86,7 +86,7 @@ struct info_frame {
     unsigned data_size;
     unsigned char* bcc2;
     unsigned char flag_f;
-};
+} ;
 
 
 #endif //_DEFINES_H_

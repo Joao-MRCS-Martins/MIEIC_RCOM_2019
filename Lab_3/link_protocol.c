@@ -155,7 +155,7 @@ int llopen(int port, int flag) {
     return fd;
 }
 
-int llwrite(int fd, char *buffer, int length) {
+int llwrite(int fd, unsigned char *buffer, int length) {
     int n_written;
     struct info_frame message;
     
