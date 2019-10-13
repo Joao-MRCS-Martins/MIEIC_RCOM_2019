@@ -34,6 +34,8 @@ unsigned char *data_stuffing(char* data, int size, unsigned *final_size) {
       stuffed_data[j+1] = ESC_ESC;
       j +=2;
     }
+  }
 
     return stuffed_data;
 }
+
