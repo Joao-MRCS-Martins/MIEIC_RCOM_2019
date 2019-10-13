@@ -11,7 +11,8 @@
 #define TRUE 1
 
 //FRAME
-#define FLAG 0x7E
+#define FLAG 0x7
+#define ESCAPE 0x7d
 
 // ADDRESS FIELD
 #define A_RECEIVER 0x01

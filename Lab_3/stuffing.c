@@ -1,7 +1,5 @@
-  #define FLAG 0x7e
-  #define ESCAPE 0x7d
-
-  #include <stdio.h>
+#include "stuffing.h"
+#include <stdio.h>
 
   void stuffing(unsigned char* array, int size){
     int final_size = size;
@@ -35,12 +33,4 @@
 
   }
 
-  int main(int argc, char** argv){
-    //if(argc < 2)
-    //  exit(1);
-
-    unsigned char ar[2] = {FLAG,ESCAPE};
-    stuffing(ar, 2);
-
-    return 0;
-  }
+ 
