@@ -84,7 +84,7 @@ struct info_frame {
     unsigned char bcc1;
     unsigned char* data;
     unsigned int data_size;
-    unsigned char bcc2;
+    unsigned char* bcc2;
     unsigned char flag_f;
 };
 

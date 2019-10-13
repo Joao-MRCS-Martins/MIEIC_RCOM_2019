@@ -17,6 +17,7 @@ struct control_frame message;
 int fd;
 int n_try = 0;
 int alrmSet = FALSE;
+int n_seq = 0;
 
 
 void alarmHandler(int sig)  {
@@ -39,10 +40,11 @@ unsigned char bcc_calc(unsigned char a, unsigned char c) {
 	return a^c;
 }
 
-unsigned char bcc2_calc(unsigned char* message, int length) {
-    unsigned char bcc2 = message[0];
+unsigned char* bcc2_calc(unsigned char* message, int length) {
+    unsigned char *bcc2 = (unsigned char *) malloc(sizeof(unsigned char));
+    *bcc2 = message[0];
     for(int i =1;i<length;i++) {
-        bcc2 ^= message[i];
+        *bcc2 ^= message[i];
     }
 
     return bcc2;
@@ -155,12 +157,32 @@ int llopen(int port, int flag) {
 
 int llwrite(int fd, char *buffer, int length) {
     int n_written;
-    //montar cabecalho FLAG A C BCC1
-    //calcular bcc2 com dados atuais
+    struct info_frame message;
+    
+    //setup frame header
+    message.flag_i = FLAG;
+    message.a = A_SENDER;
+    if(n_seq == 0)        //check sequence number
+        message.c = C_S0;
+    else
+        message.c = C_S1;
+    message.bcc1 = message.a ^ message.c;
+    
+    //bcc2 generation & stuffing
+    unsigned char *bcc2 = bcc2_calc(buffer,length);
+    unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2);
+    message.bcc2 = bcc2_stuffed;
+
+    //byte stuffing on file data
+    message.data = data_stuffing(buffer,length);
+    
+    n_seq ^= 1;     //PLACE WHERE RR IS CORRECTLY RECEIVED
+
     //fazer stuffing do pacote de dados
     //montar frame de informacao (cabecalho dados bcc2 flag)
     //enviar
     //esperar pela resposta
+    //processar resposta
     //se ocorrer timeout ou se receber REJ retransmitir
     //se tentar MAX_RETRIES vezes retornar com erro 
     return n_written;
@@ -168,8 +190,7 @@ int llwrite(int fd, char *buffer, int length) {
 
 volatile int STOP=FALSE;
 
-int llread(int fd, char *info)
-{
+int llread(int fd, char *info) {
     //info - info in packets of I
     unsigned char buffer[256];
     unsigned char packets[256];
@@ -214,8 +235,7 @@ int llread(int fd, char *info)
     return 0;
 }
 
-int llclose(int fd,int flag)
-{
+int llclose(int fd,int flag) {
     int i = 0;
     unsigned char *buffer;
 
@@ -292,13 +312,12 @@ int llclose(int fd,int flag)
 
 int main() {
     unsigned char bcc2 = ESCAPE;
-    int size;
-    unsigned char * stuffed = bcc2_stuffing(bcc2,&size);
+    unsigned char * stuffed = bcc2_stuffing(bcc2);
     if(stuffed == NULL) {
         printf("No stuffing needed. BCC: %x\n",bcc2);
     }
     else {
-       printf("BCC stuffed: %s Size: %d\n",stuffed,size);
+       printf("BCC stuffed: %s\n",stuffed);
     }
     return 0;
 }

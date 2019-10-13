@@ -3,7 +3,7 @@
 
 #include "defines.h"
 
-unsigned char* bcc2_stuffing(unsigned char bcc2, int *size);
-void stuffing(unsigned char* array, int size);
+unsigned char* bcc2_stuffing(unsigned char *bcc2);
+unsigned char *data_stuffing(unsigned char* data, int size);
 
 #endif 

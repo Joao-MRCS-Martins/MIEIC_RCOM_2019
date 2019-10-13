@@ -3,27 +3,24 @@
 #include "stuffing.h"
 
 
-unsigned char* bcc2_stuffing(unsigned char bcc2, int *size) {
+unsigned char *bcc2_stuffing(unsigned char *bcc2) {
     unsigned char* bcc2_stuffed;
     if(bcc2 == FLAG) {
         bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
         sprintf(bcc2_stuffed,"%x",FLAG_ESC);
-        *size = 2;
     }
     else if(bcc2 == ESCAPE) {
         bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
        sprintf(bcc2_stuffed,"%x",ESC_ESC);
-        *size = 2;
     }
     else {
-        *size = 1;
-        return NULL;
+        bcc2_stuffed = bcc2;
     }
 
     return bcc2_stuffed;
 }
 
-void stuffing(unsigned char* array, int size){
+unsigned char *data_stuffing(unsigned char* data, int size){
   int final_size = size;
   for(; *array != '\0'; array++){
     if(*array == ESCAPE || *array == FLAG)
