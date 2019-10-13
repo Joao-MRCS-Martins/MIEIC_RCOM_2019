@@ -1,12 +1,10 @@
 #include "./state_machine_frame.h"
 
 
-void state_machine(int *state, unsigned char info, struct Header_Fields *message)
-{
+void state_machine(int *state, unsigned char info, struct Header_Fields *message) {
 	switch (*state) {
 		case START_S:
-		  if(info == FLAG)
-		  {
+		  if(info == FLAG) {
 		    *state = FLAG_RCV;
 		  }
 		  else
@@ -14,8 +12,7 @@ void state_machine(int *state, unsigned char info, struct Header_Fields *message
 		  break;
 
 		case FLAG_RCV:
-		  if(info == message->A_EXCT)
-		  {
+		  if(info == message->A_EXCT) {
 			message->A_READ = info;
 		    *state = A_RCV;
 		  }
@@ -26,8 +23,7 @@ void state_machine(int *state, unsigned char info, struct Header_Fields *message
 		  break;
 
 		case A_RCV:
-		  if(info == message->C_EXCT)
-		  {
+		  if(info == message->C_EXCT) {
 			message->C_READ = info;
 		    *state = C_RCV;
 		  }
@@ -38,8 +34,7 @@ void state_machine(int *state, unsigned char info, struct Header_Fields *message
 		  break;
 
 		case C_RCV:
-		  if(info == message->A_READ^message->C_READ)
-		  {
+		  if(info == (message->A_READ^message->C_READ)) {
 		    *state = BCC_RCV;
 		  }
 		  else if (info == FLAG)
@@ -63,15 +58,13 @@ void state_machine(int *state, unsigned char info, struct Header_Fields *message
   }
 }
 
-void state_machine_I(int *state, unsigned char info, struct Header_Fields *message ,unsigned char *packets,int answer_flag)
-{
+void state_machine_I(int *state, unsigned char info, struct Header_Fields *message ,unsigned char *packets,int answer_flag) {
 	int i  = 0;
 	unsigned char aux;
 	unsigned char bcc_data;
 	switch (*state) {
 		case START_S:
-		  if(info == FLAG)
-		  {
+		  if(info == FLAG) {
 		    *state = FLAG_RCV;
 		  }
 		  else
@@ -79,8 +72,7 @@ void state_machine_I(int *state, unsigned char info, struct Header_Fields *messa
 		  break;
 
 		case FLAG_RCV:
-		  if(info == message->A_EXCT)
-		  {
+		  if(info == message->A_EXCT) {
 			message->A_READ = info;
 		    *state = A_RCV;
 		  }
@@ -91,8 +83,7 @@ void state_machine_I(int *state, unsigned char info, struct Header_Fields *messa
 		  break;
 
 		case A_RCV:
-		  if(info == message->C_EXCT)
-		  {
+		  if(info == message->C_EXCT) {
 			message->C_READ = info;
 		    *state = C_RCV;
 		  }
@@ -103,8 +94,7 @@ void state_machine_I(int *state, unsigned char info, struct Header_Fields *messa
 		  break;
 
 		case C_RCV:
-		  if(info == message->A_READ^message->C_READ)
-		  {
+		  if(info == (message->A_READ^message->C_READ)) {
 		    *state = BCC_RCV;
 		  }
 		  else if (info == FLAG)
@@ -119,8 +109,7 @@ void state_machine_I(int *state, unsigned char info, struct Header_Fields *messa
 			*state = INFO;
 		  }
 		case INFO:
-		if(info != FLAG)
-		{
+		if(info != FLAG) {
 			packets[i] = aux;
 					aux = info;
 			i++;
@@ -128,7 +117,7 @@ void state_machine_I(int *state, unsigned char info, struct Header_Fields *messa
 		/*else
 		  {
 			//destuffing function
-			/*if(bcc_data == function to calculate bcc of data field)
+			if(bcc_data == function to calculate bcc of data field)
 				if (new frame)
 					answer_flag = RR
 				else

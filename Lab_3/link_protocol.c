@@ -40,7 +40,7 @@ unsigned char bcc_calc(unsigned char a, unsigned char c) {
 	return a^c;
 }
 
-unsigned char* bcc2_calc(unsigned char* message, int length) {
+unsigned char* bcc2_calc( char* message, int length) {
     unsigned char *bcc2 = (unsigned char *) malloc(sizeof(unsigned char));
     *bcc2 = message[0];
     for(int i =1;i<length;i++) {
@@ -155,8 +155,8 @@ int llopen(int port, int flag) {
     return fd;
 }
 
-int llwrite(int fd, unsigned char *buffer, int length) {
-    int n_written;
+int llwrite(int fd, char *buffer, int length) {
+    //int n_written;
     struct info_frame message;
     
     //setup frame header
@@ -177,7 +177,7 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     unsigned stuffed_size;
     message.data = data_stuffing(buffer,length,&stuffed_size);
     message.data_size = stuffed_size;
-    
+
     n_seq ^= 1;     //PLACE WHERE RR IS CORRECTLY RECEIVED
 
     //fazer stuffing do pacote de dados
@@ -187,7 +187,7 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     //processar resposta
     //se ocorrer timeout ou se receber REJ retransmitir
     //se tentar MAX_RETRIES vezes retornar com erro 
-    return n_written;
+    return 0;
 }
 
 volatile int STOP=FALSE;
@@ -197,7 +197,7 @@ int llread(int fd, char *info) {
     unsigned char buffer[256];
     unsigned char packets[256];
     int i = 0 ;
-    int res = 0;
+    //int res = 0;
     int state = 0;
     int flag_answer = 0;
 
@@ -212,7 +212,7 @@ int llread(int fd, char *info) {
     while (STOP==FALSE)
     {
       alarm(TIMEOUT_R);
-      res = read(fd,&buffer[i],1);
+      /* res =*/ read(fd,&buffer[i],1);
       if (buffer[i] == FLAG && i != 0)  STOP=TRUE;
       state_machine_I(&state, buffer[i], &fields, packets,flag_answer);
       i++;
@@ -317,7 +317,7 @@ int main() {
     *bcc2 = ESCAPE;
     unsigned char * stuffed = bcc2_stuffing(bcc2);
     if(stuffed == NULL) {
-        printf("No stuffing needed. BCC: %x\n",bcc2);
+        printf("No stuffing needed. BCC: %hhn\n",bcc2);
     }
     else {
        printf("BCC stuffed: %s\n",stuffed);

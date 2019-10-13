@@ -20,7 +20,7 @@ unsigned char *bcc2_stuffing(unsigned char *bcc2) {
     return bcc2_stuffed;
 }
 
-unsigned char *data_stuffing(unsigned char* data, unsigned size, unsigned *final_size){
+unsigned char *data_stuffing(char* data, unsigned size, unsigned *final_size) {
   *final_size = size;
   unsigned char *stuffed_data = (unsigned char *) malloc(size * sizeof(unsigned char));
   
