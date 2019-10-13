@@ -170,10 +170,10 @@ int llwrite(int fd, char *buffer, int length) {
   unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2);
   message.bcc2 = bcc2_stuffed;
 
-  // byte stuffing on file data
-  unsigned stuffed_size;
-  message.data = data_stuffing(buffer, length, &stuffed_size);
-  message.data_size = stuffed_size;
+    //byte stuffing on file data
+    int stuffed_size;
+    message.data = data_stuffing(buffer, length, &stuffed_size);
+    message.data_size = stuffed_size;
 
   n_seq ^= 1; // PLACE WHERE RR IS CORRECTLY RECEIVED
 
@@ -325,10 +325,21 @@ int llclose(int fd, int flag) {
 }
 
 int main() {
-  unsigned char *bcc2 = (unsigned char *)malloc(sizeof(unsigned char));
-  *bcc2 = FLAG;
-  unsigned char *stuffed = bcc2_stuffing(bcc2);
-  printf("BCC stuffed: %x%x\n", stuffed[0], stuffed[1]);
+    unsigned char *bcc2 = (unsigned char*) malloc(sizeof(unsigned char));
+    *bcc2 = FLAG;
+    unsigned char * stuffed = bcc2_stuffing(bcc2);
+    printf("BCC stuffed: %x%x\n",stuffed[0],stuffed[1]);
 
-  return 0;
+		char cenas [5] = {0x45,0x7E,0x12,0x7D,0x7E};
+		int final;
+		unsigned char *data_stuffed = data_stuffing(cenas,5,&final);
+		printf("Stuffed array:\n");
+		for(int i = 0; i < final; i++) {
+			printf("data_stuffed[%d]: %x\n",i,data_stuffed[i]);
+		}
+
+		free(bcc2);
+		free(stuffed);
+		free(data_stuffed);
+		return 0;
 }
