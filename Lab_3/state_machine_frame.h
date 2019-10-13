@@ -14,5 +14,7 @@ struct Header_Fields {
 };
 
 void state_machine(int *state, unsigned char info, struct Header_Fields *message);
+void state_machine_I(int *state, unsigned char info, struct Header_Fields *message, unsigned char *packets, int answer_flag);
+
 
 #endif 

@@ -36,6 +36,14 @@
 #define BCC_RCV 4
 #define STOP_S 5
 
+//STATE MACHINE FRAMEI
+#define INFO 5
+#define BBC_I 6
+#define STOP_I 7
+
+#define RR 1
+#define REJ 2
+
 //EXECUTION SPECS
 #define MAX_RETRIES 3
 #define TIMEOUT 3

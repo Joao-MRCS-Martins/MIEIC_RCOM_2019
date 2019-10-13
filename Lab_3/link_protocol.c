@@ -13,9 +13,7 @@
 #include <unistd.h>
 
 struct termios oldtio;
-struct Message SET;
-struct Message DISC;
-struct Message UA;
+struct Message message;
 
 int fd;
 int n_try = 0;
@@ -33,16 +31,9 @@ void alarmHandlerR(int sig)  {
     exit(0);
 }
 
-int send_SET() {
-	return write(fd, &SET, sizeof(struct Message));
-}
-
-int send_DISC() {
-	return write(fd, &DISC, sizeof(struct Message));
-}
-
-int send_UA() {
-	return write(fd, &DISC, sizeof(struct Message));
+/*this needs to change to a generic one*/
+int send_message() {
+	return write(fd, &message, sizeof(struct Message));
 }
 
 unsigned char bcc_calc(unsigned char a, unsigned char c) {
@@ -103,15 +94,15 @@ int llopen(int port, int flag) {
 
     if(flag == TRANSMITTER) {
         //FILL SET FRAME
-        SET.flag_i = SET.flag_f = FLAG;
-        SET.a = A_SENDER;
-        SET.c = C_SET;
-        SET.bcc = bcc_calc(SET.a,SET.c);
+        message.flag_i = message.flag_f = FLAG;
+        message.a = A_SENDER;
+        message.c = C_SET;
+        message.bcc = bcc_calc(message.a,message.c);
         header.A_EXCT = A_SENDER;
         header.C_EXCT = C_UA;
 
         do {
-            send_SET();
+            send_message();
             alarm(TIMEOUT); 
             alrmSet=FALSE;              
             i=0;
@@ -143,12 +134,12 @@ int llopen(int port, int flag) {
             i++;
         }
         //FILL UA FRAME
-        UA.flag_i = UA.flag_f = FLAG;
-	    UA.a = A_SENDER;
-	    UA.c = C_UA;
-	    UA.bcc = bcc_calc(UA.a,UA.c);
+        message.flag_i = UA.flag_f = FLAG;
+	    message.a = A_SENDER;
+	    message.c = C_UA;
+	    message.bcc = bcc_calc(message.a,message.c);
 
-        write(fd,&UA,sizeof(struct Message));
+        write(fd,&message,sizeof(struct Message));
     }
     
     return fd;
@@ -172,12 +163,18 @@ int llread(int fd, char *info)
 {
     //info - info in packets of I
     unsigned char buffer[256];
+    unsigned char packets[256];
     int i = 0 ;
     int res = 0;
     int state = 0;
+    int flag_answer = 0;
 
     struct Message message;
+    struct Header_Fields fields;
 
+    fields.A_EXCT = A_SENDER;
+    fields.C_EXCT = C_S0; //can change
+    
     signal(SIGALRM,alarmHandlerR);
 
     while (STOP==FALSE)
@@ -185,15 +182,26 @@ int llread(int fd, char *info)
       alarm(TIMEOUT_R);
       res = read(fd,buffer[i],1);
       if (buffer[i] == FLAG && i != 0)  STOP=TRUE;
-      //state_machine(&state, &buffer[i], message);
+      state_machine_I(&state, &buffer[i], &message, &packets,flag_answer);
       i++;
     }
 
-    write(fd,&message, sizeof(message)); 
-    
-    //if rr return 0
-    //else rej return 1
+    message.flag_i = message.flag_f = FLAG;
+    message.a = A_SENDER;
 
+    if(flag_answer == RR)
+    {
+        message.c = RR_R0;
+        message.bcc = bcc_calc(message.a,message.c);
+    }
+    else
+    {
+        message.c = REJ_R0;
+        message.bcc = bcc_calc(message.a,message.c);
+    }
+        write(fd,&message, sizeof(struct Message)); 
+    
+    
     return 0;
 }
 
@@ -206,13 +214,13 @@ int llclose(int fd,int flag)
     {
         signal(SIGALRM,alarmHandler);
 
-        DISC.a = A_SENDER;
-        DISC.c =  C_DISC;
-        DISC.bcc = bcc_calc(DISC.a,DISC.c);
-        DISC.flag_i = DISC.flag_f = FLAG;
+        message.a = A_SENDER;
+        message.c =  C_DISC;
+        message.bcc = bcc_calc(message.a,message.c);
+        message.flag_i = message.flag_f = FLAG;
 
         //implement several tries
-        send_DISC();
+        send_message();
 
         while (STOP==FALSE)
         {
@@ -223,12 +231,12 @@ int llclose(int fd,int flag)
         i++;
         }
 
-        UA.a = A_SENDER;
-        UA.c = C_UA;
-        UA.bcc = bcc_calc(UA.a,UA.c);
-        UA.flag_i = UA.flag_f = FLAG;
+        message.a = A_SENDER;
+        message.c = C_UA;
+        message.bcc = bcc_calc(message.a,message.c);
+        message.flag_i = message.flag_f = FLAG;
 
-        send_UA();
+        send_message();
 
     }
 
@@ -245,13 +253,13 @@ int llclose(int fd,int flag)
         i++;
         }
 
-        DISC.a = A_SENDER;
-        DISC.c =  C_DISC;
-        DISC.bcc = bcc_calc(DISC.a,DISC.c);
-        DISC.flag_i = DISC.flag_f = FLAG;
+        message.a = A_SENDER;
+        message.c =  C_DISC;
+        message.bcc = bcc_calc(message.a,message.c);
+        message.flag_i = message.flag_f = FLAG;
 
         //implement several tries
-        write(fd, &DISC, sizeof(struct Message));
+        write(fd, &message, sizeof(struct Message));
         i =0;
         while (STOP==FALSE)
         {
