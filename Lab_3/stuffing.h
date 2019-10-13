@@ -4,8 +4,4 @@
 #include "defines.h"
 void stuffing(unsigned char* array, int size);
 
-
-
-
-
 #endif 

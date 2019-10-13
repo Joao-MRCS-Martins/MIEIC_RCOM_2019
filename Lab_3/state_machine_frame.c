@@ -48,7 +48,7 @@ void state_machine(int *state, unsigned char info, struct Header_Fields *message
 		    *state = START_S;
 		  break;
 		case BCC_RCV:
-		    if(info != FLAG) {
+		    if(info == FLAG) {
 			alarm(0);
 		    *state = STOP_S;
 		  }
