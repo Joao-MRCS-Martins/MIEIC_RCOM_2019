@@ -12,12 +12,21 @@
 
 //FRAME
 #define FLAG 0x7E
+
 // ADDRESS FIELD
-#define A_RECIEVER 0x01
+#define A_RECEIVER 0x01
 #define A_SENDER 0x03
+
 //CONTROL FIELD
-#define C_SET 0b00000011
-#define C_UA 0b00000111
+#define C_SET 0x03
+#define C_UA 0x07
+#define C_S0 0x00
+#define C_S1 0x40
+#define RR_R0 0x05
+#define RR_R1 0x85
+#define REJ_R0 0x01
+#define REJ_R1 0x81
+#define C_DISC 0x0B
 
 //STATE MACHINE
 #define START_S 0
@@ -30,6 +39,7 @@
 //EXECUTION SPECS
 #define MAX_RETRIES 3
 #define TIMEOUT 3
+#define TIMEOUT_R 10
 #define MAX_BUFF 255
 
 //SERIAL PORTS
@@ -44,6 +54,7 @@
 //ERROR MESSAGES
 #define INVALID_PORT -1
 #define INVALID_ACTOR -2
+#define TIMEOUT_ERROR -3
 
 struct Message {
 	unsigned char flag_i;    
