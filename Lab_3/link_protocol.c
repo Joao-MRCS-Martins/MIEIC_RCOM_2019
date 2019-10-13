@@ -9,8 +9,7 @@
 #include <signal.h>
 #include "./link_protocol.h"
 #include "./state_machine_frame.h"
-
-#include <unistd.h>
+#include "./stuffing.h"
 
 struct termios oldtio;
 struct control_frame message;
@@ -47,26 +46,6 @@ unsigned char bcc2_calc(unsigned char* message, int length) {
     }
 
     return bcc2;
-}
-
-unsigned char* bcc2_stuffing(unsigned char bcc2, int *size) {
-    unsigned char* bcc2_stuffed;
-    if(bcc2 == FLAG) {
-        bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
-        sprintf(bcc2_stuffed,"%x",FLAG_ESC);
-        *size = 2;
-    }
-    else if(bcc2 == ESCAPE) {
-        bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
-       sprintf(bcc2_stuffed,"%x",ESC_ESC);
-        *size = 2;
-    }
-    else {
-        *size = 1;
-        return NULL;
-    }
-
-    return bcc2_stuffed;
 }
 
 int llopen(int port, int flag) {
@@ -312,7 +291,7 @@ int llclose(int fd,int flag)
 }
 
 int main() {
-    unsigned char bcc2 = 0x45;
+    unsigned char bcc2 = ESCAPE;
     int size;
     unsigned char * stuffed = bcc2_stuffing(bcc2,&size);
     if(stuffed == NULL) {
