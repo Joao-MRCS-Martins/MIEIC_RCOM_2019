@@ -2,8 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-unsigned char* bcc2_stuffing(unsigned char* bcc2)
-{
+unsigned char* bcc2_stuffing(unsigned char* bcc2) {
     unsigned char* bcc2_stuffed;
     if(*bcc2 == FLAG) {
         bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
@@ -27,7 +26,7 @@ unsigned char *data_stuffing(char* data, int size, unsigned *final_size) {
   unsigned char *stuffed_data = (unsigned char *) malloc(size * sizeof(unsigned char));
   
   int j = 0;//current position on stuffed array
-  for(int i = 0; i < size; i++){
+  for(int i = 0; i < size; i++) {
     if(data[i] == ESCAPE) {
       stuffed_data = (unsigned char *) realloc(stuffed_data,++(*final_size));
       stuffed_data[j] = ESCAPE;
@@ -36,6 +35,6 @@ unsigned char *data_stuffing(char* data, int size, unsigned *final_size) {
     }
   }
 
-    return stuffed_data;
+  return stuffed_data;
 }
 

@@ -1,15 +1,16 @@
-#include "./link_protocol.h"
-#include "./state_machine_frame.h"
-#include "./stuffing.h"
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <strings.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
+//ADDED HEADERS
+#include "./link_protocol.h"
+#include "./state_machine_frame.h"
+#include "./stuffing.h"
 
 struct termios oldtio;
 struct control_frame message;
@@ -32,13 +33,11 @@ void alarmHandlerR()  {
 }
 
 /*this needs to change to a generic one*/
-int send_message()
-{
+int send_message() {
     return write(fd, &message, sizeof(struct control_frame));
 }
 
-unsigned char bcc_calc(unsigned char a, unsigned char c)
-{
+unsigned char bcc_calc(unsigned char a, unsigned char c) {
     return a ^ c;
 }
 
@@ -52,8 +51,7 @@ unsigned char* bcc2_calc( char* message, int length) {
     return bcc2;
 }
 
-int llopen(int port, int flag)
-{
+int llopen(int port, int flag) {
     char port_path[MAX_BUFF];
     struct termios newtio;
     struct control_frame UA;
@@ -183,7 +181,6 @@ int llwrite(int fd, char *buffer, int length) {
 
     n_seq ^= 1;     //PLACE WHERE RR IS CORRECTLY RECEIVED
 
-    n_seq ^= 1; //PLACE WHERE RR IS CORRECTLY RECEIVED
 
     //fazer stuffing do pacote de dados
     //montar frame de informacao (cabecalho dados bcc2 flag)
@@ -197,8 +194,7 @@ int llwrite(int fd, char *buffer, int length) {
 
 volatile int STOP = FALSE;
 
-int llread(int fd, char* info)
-{
+int llread(int fd, char* info) {
     unsigned char buffer[256];
     unsigned char packets[256];
     int i = 0;
@@ -235,8 +231,7 @@ int llread(int fd, char* info)
     return 0;
 }
 
-int llclose(int fd, int flag)
-{
+int llclose(int fd, int flag) {
     int state = 0;
     unsigned char buffer;
 

@@ -15,5 +15,5 @@ clean:
 	rm -f *.o 
 		
 format:
-	clang-format -i *.c *.h -style=WebKit
+	clang-format -i *.c *.h -style=llvm
 
