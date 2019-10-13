@@ -53,17 +53,17 @@ unsigned char* bcc2_stuffing(unsigned char bcc2, int *size) {
     unsigned char* bcc2_stuffed;
     if(bcc2 == FLAG) {
         bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
-        strcpy(bcc2_stuffed,FLAG_ESC);
+        sprintf(bcc2_stuffed,"%x",FLAG_ESC);
         *size = 2;
     }
     else if(bcc2 == ESCAPE) {
         bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
-        strcpy(bcc2_stuffed,ESC_ESC);
+       sprintf(bcc2_stuffed,"%x",ESC_ESC);
         *size = 2;
     }
     else {
         *size = 1;
-        return &bcc2;
+        return NULL;
     }
 
     return bcc2_stuffed;
@@ -187,12 +187,6 @@ int llwrite(int fd, char *buffer, int length) {
     return n_written;
 }
 
-int main() {
-    //just for compilation
-    return 0;
-}
-
-
 volatile int STOP=FALSE;
 
 int llread(int fd, char *info)
@@ -216,9 +210,9 @@ int llread(int fd, char *info)
     while (STOP==FALSE)
     {
       alarm(TIMEOUT_R);
-      res = read(fd,buffer[i],1);
+      res = read(fd,&buffer[i],1);
       if (buffer[i] == FLAG && i != 0)  STOP=TRUE;
-      state_machine_I(&state, &buffer[i], &message, &packets,flag_answer);
+      state_machine_I(&state, buffer[i], &fields, packets,flag_answer);
       i++;
     }
 
@@ -261,7 +255,7 @@ int llclose(int fd,int flag)
         while (STOP==FALSE)
         {
         alarm(TIMEOUT);
-        read(fd,buffer[i],1);
+        read(fd,&buffer[i],1);
         if (buffer[i] == FLAG && i != 0)  STOP=TRUE;
         //state_machine(&state, &buffer[i], message);
         i++;
@@ -283,7 +277,7 @@ int llclose(int fd,int flag)
         while (STOP==FALSE)
         {
         alarm(TIMEOUT_R);
-        read(fd,buffer[i],1);
+        read(fd,&buffer[i],1);
         if (buffer[i] == FLAG && i != 0)  STOP=TRUE;
         //state_machine(&state, &buffer[i], message);
         i++;
@@ -300,7 +294,7 @@ int llclose(int fd,int flag)
         while (STOP==FALSE)
         {
         alarm(TIMEOUT_R);
-        read(fd,buffer[i],1);
+        read(fd,&buffer[i],1);
         if (buffer[i] == FLAG && i != 0)  STOP=TRUE;
         //state_machine(&state, &buffer[i], message);
         i++;
@@ -317,3 +311,16 @@ int llclose(int fd,int flag)
     return 0;
 }
 
+
+int main() {
+    unsigned char bcc2 = FLAG;
+    int size;
+    unsigned char * stuffed = bcc2_stuffing(bcc2,&size);
+    if(stuffed == NULL) {
+        printf("No stuffing needed.\n");
+    }
+    else {
+       printf("BCC stuffed: %s Size: %d\n",stuffed,size);
+    }
+    return 0;
+}
