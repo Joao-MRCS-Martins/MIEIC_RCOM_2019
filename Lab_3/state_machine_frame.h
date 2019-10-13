@@ -5,16 +5,15 @@
 #include <unistd.h>
 
 struct Header_Fields {
-    //The A & C values read 
-	unsigned char A_READ;
-	unsigned char C_READ;
+    //The A & C values read
+    unsigned char A_READ;
+    unsigned char C_READ;
     // The A & C values expected
     unsigned char A_EXCT;
     unsigned char C_EXCT;
 };
 
-void state_machine(int *state, unsigned char info, struct Header_Fields *message);
-void state_machine_I(int *state, unsigned char info, struct Header_Fields *message, unsigned char *packets, int answer_flag);
+void state_machine(int* state, unsigned char info, struct Header_Fields* message);
+void state_machine_I(int* state, unsigned char info, struct Header_Fields* message, unsigned char* packets, int answer_flag);
 
-
-#endif 
+#endif

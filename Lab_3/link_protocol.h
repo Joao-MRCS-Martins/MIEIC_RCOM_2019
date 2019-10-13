@@ -17,4 +17,4 @@ unsigned char bcc_calc(unsigned char a, unsigned char c);
 unsigned char *bcc2_calc(char* message, int length);
 void alarmHandler();
 
-#endif 
+#endif

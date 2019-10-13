@@ -1,9 +1,9 @@
+#include "stuffing.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "stuffing.h"
 
-
-unsigned char *bcc2_stuffing(unsigned char *bcc2) {
+unsigned char* bcc2_stuffing(unsigned char* bcc2)
+{
     unsigned char* bcc2_stuffed;
     if(*bcc2 == FLAG) {
         bcc2_stuffed = (unsigned char *) malloc(2* sizeof(unsigned char *));
@@ -34,17 +34,6 @@ unsigned char *data_stuffing(char* data, int size, unsigned *final_size) {
       stuffed_data[j+1] = ESC_ESC;
       j +=2;
     }
-    else if (data[i] == FLAG) {
-      stuffed_data = (unsigned char *) realloc(stuffed_data,++(*final_size));
-      stuffed_data[j] = ESCAPE;
-      stuffed_data[j+1] = ESC_ESC;
-      j +=2;
-    }
-    else {
-      stuffed_data[j] = data[i];
-      j++;
-    } 
-  }
 
-  return stuffed_data;
+    return stuffed_data;
 }
