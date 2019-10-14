@@ -72,7 +72,7 @@ unsigned char *bcc2_destuffing(unsigned char *bcc2) {
   if (bcc2[0] == ESCAPE) {
 
     bcc2_stuffed = (unsigned char *)malloc(sizeof(unsigned char *));
-    if (bcc2[1] == FLAG_ESC)
+    if (bcc2[1] == ESC_ESC)
       bcc2_stuffed[0] = ESCAPE;
     else
       bcc2_stuffed[0] = FLAG;
