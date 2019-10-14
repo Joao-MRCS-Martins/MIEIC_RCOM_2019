@@ -232,7 +232,7 @@ int llread(int fd, unsigned char *packets) {
   }
 
   unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
-  ;
+  
   bcc2_destuffing(bcc_data);
   data_destuffing(packets, sizeof(packets), final_size);
 
@@ -274,11 +274,12 @@ int llclose(int fd, int flag) {
     message.c = C_DISC;
     message.bcc = bcc_calc(message.a, message.c);
     message.flag_i = message.flag_f = FLAG;
-	
+
 	printf("Sending DISC to RECEIVER.\n");
 
     do {
-      send_message();
+	  send_message();
+      printf("DISC sent.\n");
       alarm(TIMEOUT);
       alrmSet = FALSE;
       while (!alrmSet && state != STOP_S) {
@@ -286,6 +287,7 @@ int llclose(int fd, int flag) {
         read(fd, &buffer, 1);
 		printf("Char read: %x\n",buffer);
         state_machine(&state, buffer, &fields);
+		printf("State: %d\n",state);
       }
 
       if (state == STOP_S)
@@ -297,14 +299,15 @@ int llclose(int fd, int flag) {
 
 	printf("DISC received. Sending UA to RECEIVER.\n");
 
-    message.a = A_SENDER;
+    message.a = A_RECEIVER;
     message.c = C_UA;
     message.bcc = bcc_calc(message.a, message.c);
     message.flag_i = message.flag_f = FLAG;
 
     do {
-      if (send_message() < 0)
-        alarm(TIMEOUT);
+      if (send_message() > 0)
+		break;
+      alarm(TIMEOUT);
     } while (n_try < MAX_RETRIES);
 
     if (n_try == MAX_RETRIES)
@@ -329,16 +332,18 @@ int llclose(int fd, int flag) {
 	
 	printf("Sending DISC to TRANSMITTER.\n");
 
-    message.a = A_SENDER;
+    message.a = A_RECEIVER;
     message.c = C_DISC;
     message.bcc = bcc_calc(message.a, message.c);
     message.flag_i = message.flag_f = FLAG;
-
+	fields.A_EXCT = A_RECEIVER;
+	fields.C_EXCT = C_UA;
     write(fd, &message, sizeof(struct control_frame));
     alarm(TIMEOUT_R);
 	
 	printf("Waiting for UA and processing.\n");
-
+	
+	state = 0;
     while (state != STOP_S) {
       alarm(TIMEOUT_R);
       read(fd, &buffer, 1);
