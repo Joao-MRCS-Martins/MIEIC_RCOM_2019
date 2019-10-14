@@ -208,7 +208,7 @@ volatile int STOP = FALSE;
 int llread(int fd, unsigned char *packets) {
 
   unsigned char buffer;
-  unsigned char *bcc_data;
+  unsigned char *bcc_data = (unsigned char *)malloc(sizeof(unsigned char *));
   int i = 0;
   int state = 0;
   int flag_answer = 0;
@@ -224,7 +224,7 @@ int llread(int fd, unsigned char *packets) {
     i++;
   }
 
-  unsigned *final_size;
+  unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));;
   bcc2_destuffing(bcc_data);
   data_destuffing(packets,sizeof(packets),final_size);
 
@@ -341,8 +341,7 @@ int llclose(int fd, int flag) {
 
 int main() {
     unsigned char *bcc2 = (unsigned char*) malloc(2*sizeof(unsigned char));
-    bcc2[0]= ESCAPE;
-    bcc2[1]= ESC_ESC;
+    bcc2[0]= 0x34;
     unsigned char * des = bcc2_destuffing(bcc2);
     printf("BCC stuffed: %x\n",des[0]);
 
