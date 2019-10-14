@@ -2,8 +2,8 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
 #include <string.h>
+#include <strings.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <termios.h>
@@ -150,9 +150,9 @@ int llopen(int port, int flag) {
 }
 
 int llwrite(int fd, char *buffer, int length) {
-  
+
   struct info_frame message;
-	struct header_fields header;
+  struct header_fields header;
   unsigned char aux;
   int state = 0;
 
@@ -169,26 +169,25 @@ int llwrite(int fd, char *buffer, int length) {
   unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2);
   message.bcc2 = bcc2_stuffed;
 
-  //byte stuffing on file data
+  // byte stuffing on file data
   message.data = data_stuffing(buffer, length, &message.data_size);
 
-
-	//prepare reply processing
-	header.A_EXCT = A_SENDER;
-	header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
-	n_try = 0;
+  // prepare reply processing
+  header.A_EXCT = A_SENDER;
+  header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
+  n_try = 0;
 
   do {
-      
-		write(fd, &message, sizeof(struct info_frame));
+
+    write(fd, &message, sizeof(struct info_frame));
     alrmSet = FALSE;
     alarm(TIMEOUT);
-		
+
     while (!alrmSet && state != STOP_S) {
       read(fd, &aux, 1);
       state_machine(&state, aux, &header);
-			if((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
-				break;
+      if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
+        break;
     }
 
     if (state == STOP_S)
@@ -197,19 +196,18 @@ int llwrite(int fd, char *buffer, int length) {
 
   if (n_try == MAX_RETRIES)
     return TIMEOUT_ERROR;
-  
-	n_seq ^= 1; // PLACE WHERE RR IS CORRECTLY RECEIVED
-  
-	return length;
+
+  n_seq ^= 1; // PLACE WHERE RR IS CORRECTLY RECEIVED
+
+  return length;
 }
 
 volatile int STOP = FALSE;
 
-int llread(int fd, char *info) {
+int llread(int fd, unsigned char *packets) {
 
   unsigned char buffer;
-  unsigned char *bcc_data;
-  unsigned char *packets;
+  unsigned char *bcc_data = (unsigned char *)malloc(sizeof(unsigned char *));
   int i = 0;
   int state = 0;
   int flag_answer = 0;
@@ -225,25 +223,23 @@ int llread(int fd, char *info) {
     i++;
   }
 
-  unsigned *final_size;
+  unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
+  ;
   bcc2_destuffing(bcc_data);
-  data_destuffing(packets,sizeof(packets),final_size);
+  data_destuffing(packets, sizeof(packets), final_size);
 
-  if(bcc_data == bcc2_calc(packets, strlen((const char*)packets)))
-  {
-    if(flag_answer == C_S0)
+  if (bcc_data == bcc2_calc(packets, strlen((const char *)packets))) {
+    if (flag_answer == C_S0)
       message.c = RR_R0;
     else
       message.c = RR_R1;
-  }
-  else
-  {
-    if(flag_answer == C_S0)
+  } else {
+    if (flag_answer == C_S0)
       message.c = REJ_R0;
     else
       message.c = REJ_R1;
   }
-  
+
   message.flag_i = message.flag_f = FLAG;
   message.a = A_SENDER;
   message.c = flag_answer;
@@ -343,15 +339,19 @@ int llclose(int fd, int flag) {
 int main(int argc, char argv[]) {
     printf("Usage: link [port](0|1|2) [transmitter|receiver](0,1) \n");
     if(argc < 3) {
-      printf("Wrong arguments.\n")
       return -5;
     }
-
-    int fd = llopen(argv[0],argv[1]);
-    printf("fd: %d\n",fd);
+      printf("Wrong arguments.\n")
 
     close(fd);
 
+    // char cenas[5] = {0x45, 0x7D, 0x5D, 0x67, 0x34};
+    // int final;
+    // unsigned char *data_destuffed = data_destuffing(cenas, 5, &final);
+    // printf("Stuffed array:\n");
+    // for (int i = 0; i < final; i++) {
+    //   printf("data_stuffed[%d]: %x, %d\n", i, data_destuffed[i], final);
+    // }
     // unsigned char *bcc2 = (unsigned char*) malloc(sizeof(unsigned char));
     // *bcc2 = FLAG;
     // unsigned char * stuffed = bcc2_stuffing(bcc2);
