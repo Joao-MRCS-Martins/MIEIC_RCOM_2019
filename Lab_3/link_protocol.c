@@ -50,7 +50,6 @@ unsigned char bcc_calc(unsigned char a, unsigned char c) { return a ^ c; }
 int llopen(int port, int flag) {
   char port_path[MAX_BUFF];
   struct termios newtio;
-  struct control_frame UA;
   struct header_fields header;
   unsigned char aux;
   int state = 0;
@@ -275,6 +274,8 @@ int llclose(int fd, int flag) {
     message.c = C_DISC;
     message.bcc = bcc_calc(message.a, message.c);
     message.flag_i = message.flag_f = FLAG;
+	
+	printf("Sending DISC to RECEIVER.\n");
 
     do {
       send_message();
@@ -283,6 +284,7 @@ int llclose(int fd, int flag) {
       while (!alrmSet && state != STOP_S) {
         alarm(TIMEOUT);
         read(fd, &buffer, 1);
+		printf("Char read: %x\n",buffer);
         state_machine(&state, buffer, &fields);
       }
 
@@ -292,6 +294,8 @@ int llclose(int fd, int flag) {
 
     if (n_try == MAX_RETRIES)
       return TIMEOUT_ERROR;
+
+	printf("DISC received. Sending UA to RECEIVER.\n");
 
     message.a = A_SENDER;
     message.c = C_UA;
@@ -314,20 +318,26 @@ int llclose(int fd, int flag) {
     fields.C_EXCT = C_DISC; // can change
 
     signal(SIGALRM, alarmHandlerR);
+	
+	printf("Reading DISC\n.");
 
     while (state != STOP_S) {
       alarm(TIMEOUT_R);
       read(fd, &buffer, 1);
       state_machine(&state, buffer, &fields);
     }
+	
+	printf("Sending DISC to TRANSMITTER.\n");
 
     message.a = A_SENDER;
-    message.c = C_UA;
+    message.c = C_DISC;
     message.bcc = bcc_calc(message.a, message.c);
     message.flag_i = message.flag_f = FLAG;
 
     write(fd, &message, sizeof(struct control_frame));
     alarm(TIMEOUT_R);
+	
+	printf("Waiting for UA and processing.\n");
 
     while (state != STOP_S) {
       alarm(TIMEOUT_R);
@@ -335,7 +345,7 @@ int llclose(int fd, int flag) {
       state_machine(&state, buffer, &fields);
     }
   }
-
+	printf("Successfully closed link.\n");
   sleep(1);
   if (tcsetattr(fd, TCSANOW, &oldtio) == -1) {
     perror("tcsetattr");
@@ -353,7 +363,7 @@ int main(int argc, char* argv[]) {
     }
 
 	int fd = llopen(atoi(argv[1]),atoi(argv[2]));
-    close(fd);
+    return llclose(fd,atoi(argv[2]));
 
     // char cenas[5] = {0x45, 0x7D, 0x5D, 0x67, 0x34};
     // int final;
@@ -378,5 +388,5 @@ int main(int argc, char* argv[]) {
 		// free(bcc2);
 		// free(stuffed);
 		// free(data_stuffed);
-		return 0;
+
 }
