@@ -205,11 +205,10 @@ int llwrite(int fd, char *buffer, int length) {
 
 volatile int STOP = FALSE;
 
-int llread(int fd, char *info) {
+int llread(int fd, unsigned char *packets) {
 
   unsigned char buffer;
   unsigned char *bcc_data;
-  unsigned char *packets;
   int i = 0;
   int state = 0;
   int flag_answer = 0;
