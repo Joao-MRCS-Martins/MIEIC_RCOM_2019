@@ -5,8 +5,7 @@
 
 unsigned char *bcc2_stuffing(unsigned char *bcc2);
 char *data_stuffing(char *data, int size, int *final_size);
-unsigned char *data_destuffing(char *data, int size,
-                               unsigned *final_size);
+unsigned char *data_destuffing(char *data, int size, unsigned *final_size);
 unsigned char *bcc2_destuffing(unsigned char *bcc2);
 
 #endif

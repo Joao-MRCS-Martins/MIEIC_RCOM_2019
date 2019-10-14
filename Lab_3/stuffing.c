@@ -21,8 +21,7 @@ unsigned char *bcc2_stuffing(unsigned char *bcc2) {
 
 char *data_stuffing(char *data, int size, int *final_size) {
   *final_size = size;
-   char *stuffed_data =
-      (char *)malloc(size * sizeof(char));
+  char *stuffed_data = (char *)malloc(size * sizeof(char));
 
   int j = 0; // current position on stuffed array
   for (int i = 0; i < size; i++) {
@@ -45,8 +44,7 @@ char *data_stuffing(char *data, int size, int *final_size) {
   return stuffed_data;
 }
 
-unsigned char *data_destuffing(char *data, int size,
-                               unsigned *final_size) {
+unsigned char *data_destuffing(char *data, int size, unsigned *final_size) {
   *final_size = size;
   unsigned char *stuffed_data =
       (unsigned char *)malloc(size * sizeof(unsigned char));

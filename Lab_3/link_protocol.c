@@ -105,29 +105,28 @@ int llopen(int port, int flag) {
     message.bcc = bcc_calc(message.a, message.c);
     header.A_EXCT = A_SENDER;
     header.C_EXCT = C_UA;
-	
-	printf("Sending SET frame\n");
+
+    printf("Sending SET frame\n");
 
     do {
       send_message();
       alarm(TIMEOUT);
       alrmSet = FALSE;
-		  printf("Message sent. Processing UA.\n");
+      printf("Message sent. Processing UA.\n");
       while (!alrmSet && state != STOP_S) {
         read(fd, &aux, 1);
-		printf("Char read: %x\n",aux);
+        printf("Char read: %x\n", aux);
         state_machine(&state, aux, &header);
       }
 
       if (state == STOP_S)
         break;
     } while (n_try < MAX_RETRIES);
-	
-	
+
     if (n_try == MAX_RETRIES)
       return TIMEOUT_ERROR;
 
-	printf("Sender open link successfully.\n");
+    printf("Sender open link successfully.\n");
   }
 
   if (flag == RECEIVER) {
@@ -135,7 +134,7 @@ int llopen(int port, int flag) {
     header.C_EXCT = C_SET;
     alarm(TIMEOUT);
 
-	printf("Processing SET.\n"); 
+    printf("Processing SET.\n");
     while (state != STOP_S) {
       if (alrmSet) {
         return TIMEOUT_ERROR;
@@ -149,9 +148,9 @@ int llopen(int port, int flag) {
     message.a = A_SENDER;
     message.c = C_UA;
     message.bcc = bcc_calc(message.a, message.c);
-	printf("Sending UA frame.\b");
+    printf("Sending UA frame.\b");
     write(fd, &message, sizeof(struct control_frame));
-	printf("Receiver open link successfully.\n");
+    printf("Receiver open link successfully.\n");
   }
 
   return fd;
@@ -185,14 +184,14 @@ int llwrite(int fd, char *buffer, int length) {
   header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
   n_try = 0;
 
-  printf("Message Flag I: %x\n",message.flag_i);
-  printf("Message A: %x\n",message.a);
-	printf("Message C: %x\n",message.c);
-	printf("Message BCC1: %x\n",message.bcc1);
-	printf("Message data: %s\n",message.data);
-	printf("Message data size: %d\n",message.data_size);
-	printf("Message BCC2: %x%x\n",message.bcc2[0],message.bcc2[1]);
-	printf("Message Flag F: %x\n",message.flag_f);
+  printf("Message Flag I: %x\n", message.flag_i);
+  printf("Message A: %x\n", message.a);
+  printf("Message C: %x\n", message.c);
+  printf("Message BCC1: %x\n", message.bcc1);
+  printf("Message data: %s\n", message.data);
+  printf("Message data size: %d\n", message.data_size);
+  printf("Message BCC2: %x%x\n", message.bcc2[0], message.bcc2[1]);
+  printf("Message Flag F: %x\n", message.flag_f);
 
   do {
 
@@ -203,7 +202,7 @@ int llwrite(int fd, char *buffer, int length) {
 
     while (!alrmSet && state != STOP_S) {
       read(fd, &aux, 1);
-			printf("char read: %x\n",aux);
+      printf("char read: %x\n", aux);
       state_machine(&state, aux, &header);
       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
         break;
@@ -222,57 +221,84 @@ int llwrite(int fd, char *buffer, int length) {
   return length;
 }
 
-
 int llread(int fd, char *packets) {
 
-  char buffer;
-  unsigned char *bcc_data = (unsigned char *)malloc(sizeof(unsigned char *));
+  // state machine
   int state = 0;
+  int REJ1 = 0;
+  int REJ0 = 0;
+  // read information auxiliares
+  char buffer;
+  int state_read = 0;
   int flag_answer = 0;
+
+  unsigned char *bcc_data = (unsigned char *)malloc(sizeof(unsigned char *));
 
   struct control_frame message;
 
   signal(SIGALRM, alarmHandlerR);
 
-  while (state != STOP_I) {
-    alarm(TIMEOUT_R);
-    read(fd, &buffer, 1);
-    printf("I char read: %x\n",buffer);
-    state_machine_I(&state, buffer, packets, bcc_data, flag_answer);
-    printf("reading state: %d\n",state);
-  }
+  switch (state) {
+  case READ_R:
+    while (state_read != STOP_I) {
+      alarm(TIMEOUT_R);
+      read(fd, &buffer, 1);
+      printf("I char read: %x\n", buffer);
+      state_machine_I(&state, buffer, packets, bcc_data, flag_answer);
+      printf("reading state: %d\n", state);
+    }
+    state = ANALIZE_R;
+    printf("Received message: %s\n", packets);
+    break;
+  case ANALIZE_R:
+    bcc2_destuffing(bcc_data);
+    unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
+    data_destuffing(packets, sizeof(packets), final_size);
 
-  printf("Received message: %s\n",packets);
+    if (bcc_data == bcc2_calc(packets, strlen((const char *)packets))) {
+      if (flag_answer == C_S0)
+        message.c = RR_R0;
+      else
+        message.c = RR_R1;
 
-  unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
-  bcc2_destuffing(bcc_data);
-  data_destuffing(packets, sizeof(packets), final_size);
+    } else {
+      if (flag_answer == C_S0)
+        message.c = REJ_R0;
+      else
+        message.c = REJ_R1;
+    }
 
-  if (bcc_data == bcc2_calc(packets, strlen((const char *)packets))) {
-    if (flag_answer == C_S0)
-      message.c = RR_R0;
+    message.flag_i = message.flag_f = FLAG;
+    message.a = A_SENDER;
+    message.bcc = bcc_calc(message.a, message.c);
+
+    state = WRITE_R;
+    break;
+  case WRITE_R:
+    write(fd, &message, sizeof(struct control_frame));
+    if (message.c == REJ_R0) {
+      if (REJ0 < MAX_REJ) {
+        REJ0++;
+        state = READ_R;
+      } else {
+        REJ0 = 0;
+        // timeout (sai)
+      }
+    } else if (message.c == REJ_R1) {
+      if (REJ1 < MAX_REJ) {
+        REJ1++;
+        state = READ_R;
+      } else {
+        REJ1 = 0;
+        // timeout (sai)
+      }
+    }
     else
-      message.c = RR_R1;
-  } else {
-    if (flag_answer == C_S0)
-      message.c = REJ_R0;
-    else
-      message.c = REJ_R1;
+      state = END_R;
+  case END_R:
+    break;
   }
-
-  message.flag_i = message.flag_f = FLAG;
-  message.a = A_SENDER;
-  message.bcc = bcc_calc(message.a, message.c);
-
-  printf("Message Reply Flag I: %x\n",message.flag_i);
-	printf("Message Reply A: %x\n",message.a);
-	printf("Message Reply C: %x\n",message.c);
-	printf("Message Reply BCC: %x\n",message.bcc);	
-	printf("Message Reply Flag F: %x\n",message.flag_f);
-
-  write(fd, &message, sizeof(struct control_frame));
-
-  return 0;
+  return strlen(packets);
 }
 
 int llclose(int fd, int flag) {
@@ -292,19 +318,19 @@ int llclose(int fd, int flag) {
     message.bcc = bcc_calc(message.a, message.c);
     message.flag_i = message.flag_f = FLAG;
 
-	printf("Sending DISC to RECEIVER.\n");
+    printf("Sending DISC to RECEIVER.\n");
 
     do {
-	  send_message();
+      send_message();
       printf("DISC sent.\n");
       alarm(TIMEOUT);
       alrmSet = FALSE;
       while (!alrmSet && state != STOP_S) {
         alarm(TIMEOUT);
         read(fd, &buffer, 1);
-		printf("Char read: %x\n",buffer);
+        printf("Char read: %x\n", buffer);
         state_machine(&state, buffer, &fields);
-		printf("State: %d\n",state);
+        printf("State: %d\n", state);
       }
 
       if (state == STOP_S)
@@ -314,7 +340,7 @@ int llclose(int fd, int flag) {
     if (n_try == MAX_RETRIES)
       return TIMEOUT_ERROR;
 
-	printf("DISC received. Sending UA to RECEIVER.\n");
+    printf("DISC received. Sending UA to RECEIVER.\n");
 
     message.a = A_RECEIVER;
     message.c = C_UA;
@@ -323,7 +349,7 @@ int llclose(int fd, int flag) {
 
     do {
       if (send_message() > 0)
-		break;
+        break;
       alarm(TIMEOUT);
     } while (n_try < MAX_RETRIES);
 
@@ -338,36 +364,36 @@ int llclose(int fd, int flag) {
     fields.C_EXCT = C_DISC; // can change
 
     signal(SIGALRM, alarmHandlerR);
-	
-	printf("Reading DISC\n.");
+
+    printf("Reading DISC\n.");
 
     while (state != STOP_S) {
       alarm(TIMEOUT_R);
       read(fd, &buffer, 1);
       state_machine(&state, buffer, &fields);
     }
-	
-	printf("Sending DISC to TRANSMITTER.\n");
+
+    printf("Sending DISC to TRANSMITTER.\n");
 
     message.a = A_RECEIVER;
     message.c = C_DISC;
     message.bcc = bcc_calc(message.a, message.c);
     message.flag_i = message.flag_f = FLAG;
-	fields.A_EXCT = A_RECEIVER;
-	fields.C_EXCT = C_UA;
+    fields.A_EXCT = A_RECEIVER;
+    fields.C_EXCT = C_UA;
     write(fd, &message, sizeof(struct control_frame));
     alarm(TIMEOUT_R);
-	
-	printf("Waiting for UA and processing.\n");
-	
-	state = 0;
+
+    printf("Waiting for UA and processing.\n");
+
+    state = 0;
     while (state != STOP_S) {
       alarm(TIMEOUT_R);
       read(fd, &buffer, 1);
       state_machine(&state, buffer, &fields);
     }
   }
-	printf("Successfully closed link.\n");
+  printf("Successfully closed link.\n");
   sleep(1);
   if (tcsetattr(fd, TCSANOW, &oldtio) == -1) {
     perror("tcsetattr");
@@ -377,12 +403,12 @@ int llclose(int fd, int flag) {
   return 0;
 }
 
-int main(int argc, char* argv[]) {
-    printf("Usage: link [port](0|1|2) [transmitter|receiver](0,1) \n");
-    if(argc < 3) {
-      printf("Wrong arguments.\n");
-      return -5;
-    }
+int main(int argc, char *argv[]) {
+  printf("Usage: link [port](0|1|2) [transmitter|receiver](0,1) \n");
+  if (argc < 3) {
+    printf("Wrong arguments.\n");
+    return -5;
+  }
 
   char cenas[5] = {0x45, 0x7E, 0x5E, 0x67, 0x34};
   int final;
@@ -392,40 +418,38 @@ int main(int argc, char* argv[]) {
     printf("data_stuffed[%d]: %x, %d\n", i, data_destuffed[i], final);
   }
 
-	if (atoi(argv[2]) == 0)  {
-		char mensagem[] = {FLAG,0x43,0x12,ESCAPE};	
-		int n = llwrite(fd,mensagem,4);
-		printf("n: %d\n",n);
-	}
-	else {
-		char mensagem[255];
-		int n = llread(fd,mensagem);
-		printf("n: %d\n",n);
-	}
-    return llclose(fd,atoi(argv[2]));
+  if (atoi(argv[2]) == 0) {
+    char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE};
+    int n = llwrite(fd, mensagem, 4);
+    printf("n: %d\n", n);
+  } else {
+    char mensagem[255];
+    int n = llread(fd, mensagem);
+    printf("n: %d\n", n);
+  }
+  return llclose(fd, atoi(argv[2]));
 
-    // char cenas[5] = {0x45, 0x7D, 0x5D, 0x67, 0x34};
-    // int final;
-    // unsigned char *data_destuffed = data_destuffing(cenas, 5, &final);
-    // printf("Stuffed array:\n");
-    // for (int i = 0; i < final; i++) {
-    //   printf("data_stuffed[%d]: %x, %d\n", i, data_destuffed[i], final);
-    // }
-    // unsigned char *bcc2 = (unsigned char*) malloc(sizeof(unsigned char));
-    // *bcc2 = FLAG;
-    // unsigned char * stuffed = bcc2_stuffing(bcc2);
-    // printf("BCC stuffed: %x%x\n",stuffed[0],stuffed[1]);
+  // char cenas[5] = {0x45, 0x7D, 0x5D, 0x67, 0x34};
+  // int final;
+  // unsigned char *data_destuffed = data_destuffing(cenas, 5, &final);
+  // printf("Stuffed array:\n");
+  // for (int i = 0; i < final; i++) {
+  //   printf("data_stuffed[%d]: %x, %d\n", i, data_destuffed[i], final);
+  // }
+  // unsigned char *bcc2 = (unsigned char*) malloc(sizeof(unsigned char));
+  // *bcc2 = FLAG;
+  // unsigned char * stuffed = bcc2_stuffing(bcc2);
+  // printf("BCC stuffed: %x%x\n",stuffed[0],stuffed[1]);
 
-		// char cenas [5] = {0x45,0x7E,0x12,0x7D,0x7E};
-		// int final;
-		// unsigned char *data_stuffed = data_stuffing(cenas,5,&final);
-		// printf("Stuffed array:\n");
-		// for(int i = 0; i < final; i++) {
-		// 	printf("data_stuffed[%d]: %x\n",i,data_stuffed[i]);
-		// }
+  // char cenas [5] = {0x45,0x7E,0x12,0x7D,0x7E};
+  // int final;
+  // unsigned char *data_stuffed = data_stuffing(cenas,5,&final);
+  // printf("Stuffed array:\n");
+  // for(int i = 0; i < final; i++) {
+  // 	printf("data_stuffed[%d]: %x\n",i,data_stuffed[i]);
+  // }
 
-		// free(bcc2);
-		// free(stuffed);
-		// free(data_stuffed);
-
+  // free(bcc2);
+  // free(stuffed);
+  // free(data_stuffed);
 }

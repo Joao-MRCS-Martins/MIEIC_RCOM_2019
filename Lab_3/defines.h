@@ -46,11 +46,18 @@
 #define BBC_I 6
 #define STOP_I 7
 
+// STATE MACHINE LLREAD
+#define READ_R 0
+#define ANALIZE_R 1
+#define WRITE_R 2
+#define END_R 3
+
 // EXECUTION SPECS
 #define MAX_RETRIES 3
 #define TIMEOUT 3
 #define TIMEOUT_R 10
 #define MAX_BUFF 255
+#define MAX_REJ 3
 
 // SERIAL PORTS
 #define ttyS0 0
