@@ -350,8 +350,8 @@ int main(int argc, char* argv[]) {
       printf("Wrong arguments.\n");
       return -5;
     }
-	
-	int fd = llopen(atoi(argv[0]),atoi(argv[1]));
+
+	int fd = llopen(atoi(argv[1]),atoi(argv[2]));
     close(fd);
 
     // char cenas[5] = {0x45, 0x7D, 0x5D, 0x67, 0x34};
