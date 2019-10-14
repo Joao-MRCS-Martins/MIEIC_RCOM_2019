@@ -336,13 +336,14 @@ int llclose(int fd, int flag) {
   return 0;
 }
 
-int main(int argc, char argv[]) {
+int main(int argc, char* argv[]) {
     printf("Usage: link [port](0|1|2) [transmitter|receiver](0,1) \n");
     if(argc < 3) {
+      printf("Wrong arguments.\n");
       return -5;
     }
-      printf("Wrong arguments.\n")
-
+	
+	int fd = llopen(atoi(argv[0]),atoi(argv[1]));
     close(fd);
 
     // char cenas[5] = {0x45, 0x7D, 0x5D, 0x67, 0x34};
