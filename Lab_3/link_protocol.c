@@ -368,6 +368,17 @@ int main(int argc, char* argv[]) {
     }
 
 	int fd = llopen(atoi(argv[1]),atoi(argv[2]));
+
+	if (atoi(argv[2]) == 0)  {
+		char mensagem[10] = "cenasmenas";	
+		int n = llwrite(fd,mensagem,10);
+		printf("n: %d\n",n);
+	}
+	else {
+		unsigned char mensagem[255];
+		int n = llread(fd,mensagem);
+		printf("n: %d\n",n);
+	}
     return llclose(fd,atoi(argv[2]));
 
     // char cenas[5] = {0x45, 0x7D, 0x5D, 0x67, 0x34};
