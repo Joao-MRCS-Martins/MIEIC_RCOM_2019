@@ -53,7 +53,7 @@ void state_machine(int *state, unsigned char info,
   }
 }
 
-void state_machine_I(int *state, unsigned char info, unsigned char *packets,
+void state_machine_I(int *state, unsigned char info, char *packets,
                      unsigned char *bcc_data, int C) {
   int i = 0;
   int j = 0;

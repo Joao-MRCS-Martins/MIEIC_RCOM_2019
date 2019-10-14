@@ -112,7 +112,7 @@ int llopen(int port, int flag) {
       send_message();
       alarm(TIMEOUT);
       alrmSet = FALSE;
-		printf("Message sent. Processing UA.\n");
+		  printf("Message sent. Processing UA.\n");
       while (!alrmSet && state != STOP_S) {
         read(fd, &aux, 1);
 		printf("Char read: %x\n",aux);
@@ -185,14 +185,25 @@ int llwrite(int fd, char *buffer, int length) {
   header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
   n_try = 0;
 
+  printf("Message Flag I: %x\n",message.flag_i);
+  printf("Message A: %x\n",message.a);
+	printf("Message C: %x\n",message.c);
+	printf("Message BCC1: %x\n",message.bcc1);
+	printf("Message data: %s\n",message.data);
+	printf("Message data size: %d\n",message.data_size);
+	printf("Message BCC2: %x%x\n",message.bcc2[0],message.bcc2[1]);
+	printf("Message Flag F: %x\n",message.flag_f);
+
   do {
 
     write(fd, &message, sizeof(struct info_frame));
+    printf("Sent message.\n");
     alrmSet = FALSE;
     alarm(TIMEOUT);
 
     while (!alrmSet && state != STOP_S) {
       read(fd, &aux, 1);
+			printf("char read: %x\n",aux);
       state_machine(&state, aux, &header);
       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
         break;
@@ -207,16 +218,16 @@ int llwrite(int fd, char *buffer, int length) {
 
   n_seq ^= 1; // PLACE WHERE RR IS CORRECTLY RECEIVED
 
+  printf("Written successfully.\n");
   return length;
 }
 
 volatile int STOP = FALSE;
 
-int llread(int fd, unsigned char *packets) {
+int llread(int fd, char *packets) {
 
-  unsigned char buffer;
+  char buffer;
   unsigned char *bcc_data = (unsigned char *)malloc(sizeof(unsigned char *));
-  int i = 0;
   int state = 0;
   int flag_answer = 0;
 
@@ -224,12 +235,15 @@ int llread(int fd, unsigned char *packets) {
 
   signal(SIGALRM, alarmHandlerR);
 
-  while (state == STOP_I) {
+  while (state != STOP_I) {
     alarm(TIMEOUT_R);
     read(fd, &buffer, 1);
-    state_machine_I(&state, buffer, bcc_data, packets, flag_answer);
-    i++;
+    printf("I char read: %x\n",buffer);
+    state_machine_I(&state, buffer, packets, bcc_data, flag_answer);
+    printf("reading state: %d\n",state);
   }
+
+  printf("Received message: %s\n",packets);
 
   unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
   
@@ -250,8 +264,13 @@ int llread(int fd, unsigned char *packets) {
 
   message.flag_i = message.flag_f = FLAG;
   message.a = A_SENDER;
-  message.c = flag_answer;
   message.bcc = bcc_calc(message.a, message.c);
+
+  printf("Message Reply Flag I: %x\n",message.flag_i);
+	printf("Message Reply A: %x\n",message.a);
+	printf("Message Reply C: %x\n",message.c);
+	printf("Message Reply BCC: %x\n",message.bcc);	
+	printf("Message Reply Flag F: %x\n",message.flag_f);
 
   write(fd, &message, sizeof(struct control_frame));
 
@@ -370,12 +389,12 @@ int main(int argc, char* argv[]) {
 	int fd = llopen(atoi(argv[1]),atoi(argv[2]));
 
 	if (atoi(argv[2]) == 0)  {
-		char mensagem[10] = "cenasmenas";	
-		int n = llwrite(fd,mensagem,10);
+		char mensagem[] = {FLAG,0x43,0x12,ESCAPE};	
+		int n = llwrite(fd,mensagem,4);
 		printf("n: %d\n",n);
 	}
 	else {
-		unsigned char mensagem[255];
+		char mensagem[255];
 		int n = llread(fd,mensagem);
 		printf("n: %d\n",n);
 	}
