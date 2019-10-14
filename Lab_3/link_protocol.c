@@ -106,12 +106,14 @@ int llopen(int port, int flag) {
     message.bcc = bcc_calc(message.a, message.c);
     header.A_EXCT = A_SENDER;
     header.C_EXCT = C_UA;
+	
+	printf("Sending SET frame\n");
 
     do {
       send_message();
       alarm(TIMEOUT);
       alrmSet = FALSE;
-
+		printf("Message sent. Processing UA.\n");
       while (!alrmSet && state != STOP_S) {
         read(fd, &aux, 1);
         state_machine(&state, aux, &header);
@@ -120,15 +122,20 @@ int llopen(int port, int flag) {
       if (state == STOP_S)
         break;
     } while (n_try < MAX_RETRIES);
-
+	
+	
     if (n_try == MAX_RETRIES)
       return TIMEOUT_ERROR;
+
+	printf("Sender open link successfully.\n");
   }
 
   if (flag == RECEIVER) {
     header.A_EXCT = A_SENDER;
     header.C_EXCT = C_SET;
     alarm(TIMEOUT);
+
+	printf("Processing SET.\n"); 
     while (state != STOP_S) {
       if (alrmSet) {
         return TIMEOUT_ERROR;
@@ -142,8 +149,9 @@ int llopen(int port, int flag) {
     message.a = A_SENDER;
     message.c = C_UA;
     message.bcc = bcc_calc(message.a, message.c);
-
+	printf("Sending UA frame.\b");
     write(fd, &message, sizeof(struct control_frame));
+	printf("Receiver open link successfully.\n");
   }
 
   return fd;
