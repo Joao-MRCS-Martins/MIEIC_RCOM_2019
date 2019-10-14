@@ -116,6 +116,7 @@ int llopen(int port, int flag) {
 		printf("Message sent. Processing UA.\n");
       while (!alrmSet && state != STOP_S) {
         read(fd, &aux, 1);
+		printf("Char read: %x\n",aux);
         state_machine(&state, aux, &header);
       }
 
@@ -145,7 +146,7 @@ int llopen(int port, int flag) {
       state_machine(&state, aux, &header);
     }
     // FILL UA FRAME
-    message.flag_i = UA.flag_f = FLAG;
+    message.flag_i = message.flag_f = FLAG;
     message.a = A_SENDER;
     message.c = C_UA;
     message.bcc = bcc_calc(message.a, message.c);
