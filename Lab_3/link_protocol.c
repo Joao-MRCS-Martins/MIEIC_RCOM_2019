@@ -340,22 +340,33 @@ int llclose(int fd, int flag) {
   return 0;
 }
 
-int main() {
-    unsigned char *bcc2 = (unsigned char*) malloc(sizeof(unsigned char));
-    *bcc2 = FLAG;
-    unsigned char * stuffed = bcc2_stuffing(bcc2);
-    printf("BCC stuffed: %x%x\n",stuffed[0],stuffed[1]);
+int main(int argc, char argv[]) {
+    printf("Usage: link [port](0|1|2) [transmitter|receiver](0,1) \n");
+    if(argc < 3) {
+      printf("Wrong arguments.\n")
+      return -5;
+    }
 
-		char cenas [5] = {0x45,0x7E,0x12,0x7D,0x7E};
-		int final;
-		unsigned char *data_stuffed = data_stuffing(cenas,5,&final);
-		printf("Stuffed array:\n");
-		for(int i = 0; i < final; i++) {
-			printf("data_stuffed[%d]: %x\n",i,data_stuffed[i]);
-		}
+    int fd = llopen(argv[0],argv[1]);
+    printf("fd: %d\n",fd);
 
-		free(bcc2);
-		free(stuffed);
-		free(data_stuffed);
+    close(fd);
+
+    // unsigned char *bcc2 = (unsigned char*) malloc(sizeof(unsigned char));
+    // *bcc2 = FLAG;
+    // unsigned char * stuffed = bcc2_stuffing(bcc2);
+    // printf("BCC stuffed: %x%x\n",stuffed[0],stuffed[1]);
+
+		// char cenas [5] = {0x45,0x7E,0x12,0x7D,0x7E};
+		// int final;
+		// unsigned char *data_stuffed = data_stuffing(cenas,5,&final);
+		// printf("Stuffed array:\n");
+		// for(int i = 0; i < final; i++) {
+		// 	printf("data_stuffed[%d]: %x\n",i,data_stuffed[i]);
+		// }
+
+		// free(bcc2);
+		// free(stuffed);
+		// free(data_stuffed);
 		return 0;
 }
