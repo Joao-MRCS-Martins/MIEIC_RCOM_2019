@@ -222,7 +222,6 @@ int llwrite(int fd, char *buffer, int length) {
   return length;
 }
 
-volatile int STOP = FALSE;
 
 int llread(int fd, char *packets) {
 
@@ -246,7 +245,6 @@ int llread(int fd, char *packets) {
   printf("Received message: %s\n",packets);
 
   unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
-  
   bcc2_destuffing(bcc_data);
   data_destuffing(packets, sizeof(packets), final_size);
 
@@ -386,7 +384,13 @@ int main(int argc, char* argv[]) {
       return -5;
     }
 
-	int fd = llopen(atoi(argv[1]),atoi(argv[2]));
+  char cenas[5] = {0x45, 0x7E, 0x5E, 0x67, 0x34};
+  int final;
+  unsigned char *data_destuffed = data_destuffing(cenas, 5, &final);
+  printf("Stuffed array:\n");
+  for (int i = 0; i < final; i++) {
+    printf("data_stuffed[%d]: %x, %d\n", i, data_destuffed[i], final);
+  }
 
 	if (atoi(argv[2]) == 0)  {
 		char mensagem[] = {FLAG,0x43,0x12,ESCAPE};	
