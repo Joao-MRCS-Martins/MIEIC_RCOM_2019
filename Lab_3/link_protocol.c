@@ -119,8 +119,12 @@ int llopen(int port, int flag) {
         state_machine(&state, aux, &header);
       }
 
+
       if (state == STOP_S)
+{
+	printf("namamam\n");
         break;
+}
     } while (n_try < MAX_RETRIES);
 
     if (n_try == MAX_RETRIES)
@@ -195,8 +199,8 @@ int llwrite(int fd, char *buffer, int length) {
 
   do {
 
-    write(fd, &message, sizeof(struct info_frame));
-    printf("Sent message.\n");
+    int r = write(fd, &message, sizeof(struct info_frame));
+    printf("Sent message %d.\n",r);
     alrmSet = FALSE;
     alarm(TIMEOUT);
 
@@ -416,11 +420,10 @@ int main(int argc, char *argv[]) {
     return -5;
   }
 
-
+	int fd = llopen(atoi(argv[1]), atoi(argv[2]));
   if (atoi(argv[2]) == 0) {
-    char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE};
+    char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE,FLAG};
     int n = llwrite(fd, mensagem, 4);
-    printf("n: %d\n", n);
   } else {
     char mensagem[255];
     int n = llread(fd, mensagem);
