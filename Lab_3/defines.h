@@ -43,8 +43,7 @@
 
 // STATE MACHINE FRAMEI
 #define INFO 5
-#define BBC_I 6
-#define STOP_I 7
+#define STOP_I 6
 
 // STATE MACHINE LLREAD
 #define READ_R 0
