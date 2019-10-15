@@ -3,6 +3,7 @@
 
 #include "./defines.h"
 
-int sender_app(int port, char *file);
-int receiver_app(int port);
+char *getFileData(char *filename, int *file_size);
+int senderApp(int port, char *file);
+int receiverApp(int port);
 #endif

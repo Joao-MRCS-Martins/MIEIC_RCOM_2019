@@ -56,7 +56,6 @@
 #define MAX_RETRIES 3
 #define TIMEOUT 3
 #define TIMEOUT_R 10
-#define MAX_BUFF 255
 #define MAX_REJ 3
 
 // SERIAL PORTS
@@ -69,10 +68,11 @@
 #define RECEIVER 1
 
 // ERROR MESSAGES
-#define INVALID_PORT -1
-#define INVALID_ACTOR -2
-#define INVALID_ARGS -3
-#define TIMEOUT_ERROR -4
+#define SETUP_ERROR -1
+#define INVALID_PORT -2
+#define INVALID_ACTOR -3
+#define INVALID_ARGS -4
+#define TIMEOUT_ERROR -5
 
 struct control_frame {
   unsigned char flag_i;
@@ -93,8 +93,23 @@ struct info_frame {
   unsigned char flag_f;
 };
 
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+
 ///// APPLICATION LAYER /////                                                                                                 
-#define MAX_SIZE 4096 
+#define MAX_PCKT_SIZE 500 /* Maximum of bytes in each packet */
+#define MAX_BUFF 50 /* Maximum length of a file name */
+//PACKET HEADER SYMBOL
+#define C_DATA 1
+#define C_START 2
+#define C_END 3
+
+//TYPE (TLV) PARAMETER
+#define T_SIZE 0
+#define T_NAME 1
+
+//LENGTH (TLV) PARAMETER
+#define L1_S 0x04
 
 struct data_packet {                                                                                                  
   unsigned char C ;                                                                                                 
@@ -106,24 +121,14 @@ struct data_packet {
 
 struct control_packet {
   unsigned char C;
-  struct tlv **tlvs;
+  unsigned char T1;
+  unsigned char L1;
+  unsigned char V1[4]; //int -> 4 bytes (chars)
+  unsigned char T2;
+  unsigned char L2;
+  unsigned char V2[MAX_BUFF];
 };
 
-struct tlv {
-  unsigned char T;
-  unsigned char L;
-  unsigned char V;
-};
 
-struct link_layer {
-  int port; /*Dispositivo /dev/ttySx, x = 0, 1*/
-  int baudRate; /*Velocidade de transmissão*/
-  unsigned int sequenceNumber; /*Número de sequência da trama: 0, 1*/
-  unsigned int timeout; /*Valor do temporizador: 1 s*/
-  unsigned int numTransmissions; /*Número de tentativas em caso de falha*/
-  char frame[MAX_SIZE];
- /*Trama*/
-
-};
 
 #endif //_DEFINES_H_

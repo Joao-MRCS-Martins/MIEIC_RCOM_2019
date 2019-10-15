@@ -69,12 +69,12 @@ int llopen(int port, int flag) {
   fd = open(port_path, O_RDWR | O_NOCTTY);
   if (fd < 0) {
     perror(port_path);
-    exit(-1);
+    return -1;
   }
 
   if (tcgetattr(fd, &oldtio) == -1) { /* save current port settings */
     perror("tcgetattr");
-    exit(-1);
+    return -1;
   }
 
   bzero(&newtio, sizeof(newtio));
@@ -92,7 +92,7 @@ int llopen(int port, int flag) {
 
   if (tcsetattr(fd, TCSANOW, &newtio) == -1) {
     perror("tcsetattr");
-    exit(-1);
+    return -1;
   }
 
   printf("Serial port set up.\n");
@@ -255,7 +255,7 @@ int llread(int fd, char *packets) {
 
 
   printf("Message data: %x%x%x%x%x%x\n", packets[0],packets[1],packets[2],packets[3],packets[4],packets[5]);
-  printf("Message data size: %d\n", strlen(packets));
+  printf("Message data size: %ld\n", strlen(packets));
 
     break;
   case ANALIZE_R:
