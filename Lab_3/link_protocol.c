@@ -181,7 +181,7 @@ int llwrite(int fd, char *buffer, int length) {
   message.bcc2 = bcc2_stuffed;
 
   // byte stuffing on file data
-  message.data = data_stuffing(buffer, length, &message.data_size);
+  //message.data = data_stuffing(buffer, length, &message.data_size);
 
   // prepare reply processing
   header.A_EXCT = A_SENDER;
@@ -193,7 +193,6 @@ int llwrite(int fd, char *buffer, int length) {
   printf("Message C: %x\n", message.c);
   printf("Message BCC1: %x\n", message.bcc1);
   printf("Message data: %x%x%x%x%x%x\n", message.data[0],message.data[1],message.data[2],message.data[3],message.data[4],message.data[5]);
-  printf("Message data size: %d\n", message.data_size);
   printf("Message BCC2: %x%x\n", message.bcc2[0], message.bcc2[1]);
   printf("Message Flag F: %x\n", message.flag_f);
 
@@ -225,7 +224,7 @@ int llwrite(int fd, char *buffer, int length) {
   return length;
 }
 
-int llread(int fd, char *packets) {
+int llread(int fd, unsigned char *packets) {
   // state machine
   int state = 0;
   int REJ1 = 0;
@@ -251,7 +250,6 @@ int llread(int fd, char *packets) {
       printf("reading state: %d\n", state_read);
     }
     state = ANALIZE_R;
-    printf("Received message: %s\n", packets);
 
 
   printf("Message data: %x%x%x%x%x%x\n", packets[0],packets[1],packets[2],packets[3],packets[4],packets[5]);
@@ -418,12 +416,9 @@ int main(int argc, char *argv[]) {
     return -5;
   }
 
-<<<<<<< HEAD
-	int fd = llopen(atoi(argv[1]), atoi(argv[2]));
-=======
-  int fd = llopen(atoi(argv[1]), atoi(argv[2]));
 
->>>>>>> fcab7d638ca4f0c0777130e0ada1dd2655e08f63
+	int fd = llopen(atoi(argv[1]), atoi(argv[2]));
+
   if (atoi(argv[2]) == 0) {
     char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE,FLAG};
     int n = llwrite(fd, mensagem, 4);
