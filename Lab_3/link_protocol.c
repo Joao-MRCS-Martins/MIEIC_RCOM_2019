@@ -152,7 +152,7 @@ int llopen(int port, int flag) {
     message.a = A_SENDER;
     message.c = C_UA;
     message.bcc = bcc_calc(message.a, message.c);
-    printf("Sending UA frame.\b");
+    printf("Sending UA frame.\n");
     write(fd, &message, sizeof(struct control_frame));
     printf("Receiver open link successfully.\n");
   }
@@ -226,13 +226,12 @@ int llwrite(int fd, char *buffer, int length) {
 }
 
 int llread(int fd, char *packets) {
-
   // state machine
   int state = 0;
   int REJ1 = 0;
   int REJ0 = 0;
   // read information auxiliares
-  char buffer;
+  unsigned char buffer;
   int state_read = 0;
   int flag_answer = 0;
 
@@ -248,8 +247,8 @@ int llread(int fd, char *packets) {
       alarm(TIMEOUT_R);
       read(fd, &buffer, 1);
       printf("I char read: %x\n", buffer);
-      state_machine_I(&state, buffer, packets, bcc_data, flag_answer);
-      printf("reading state: %d\n", state);
+      state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer);
+      printf("reading state: %d\n", state_read);
     }
     state = ANALIZE_R;
     printf("Received message: %s\n", packets);
@@ -414,19 +413,23 @@ int llclose(int fd, int flag) {
 }
 
 int main(int argc, char *argv[]) {
-  printf("Usage: link [port](0|1|2) [transmitter|receiver](0,1) \n");
   if (argc < 3) {
     printf("Wrong arguments.\n");
     return -5;
   }
 
+<<<<<<< HEAD
 	int fd = llopen(atoi(argv[1]), atoi(argv[2]));
+=======
+  int fd = llopen(atoi(argv[1]), atoi(argv[2]));
+
+>>>>>>> fcab7d638ca4f0c0777130e0ada1dd2655e08f63
   if (atoi(argv[2]) == 0) {
     char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE,FLAG};
     int n = llwrite(fd, mensagem, 4);
   } else {
-    char mensagem[255];
-    int n = llread(fd, mensagem);
+    char mensage[255];
+    int n = llread(fd, mensage);
     printf("n: %d\n", n);
   }
   return llclose(fd, atoi(argv[2]));
