@@ -188,7 +188,7 @@ int llwrite(int fd, char *buffer, int length) {
   printf("Message A: %x\n", message.a);
   printf("Message C: %x\n", message.c);
   printf("Message BCC1: %x\n", message.bcc1);
-  printf("Message data: %s\n", message.data);
+  printf("Message data: %x%x%x%x%x%x\n", message.data[0],message.data[1],message.data[2],message.data[3],message.data[4],message.data[5]);
   printf("Message data size: %d\n", message.data_size);
   printf("Message BCC2: %x%x\n", message.bcc2[0], message.bcc2[1]);
   printf("Message Flag F: %x\n", message.flag_f);
@@ -249,11 +249,17 @@ int llread(int fd, char *packets) {
     }
     state = ANALIZE_R;
     printf("Received message: %s\n", packets);
+
+
+  printf("Message data: %x%x%x%x%x%x\n", packets[0],packets[1],packets[2],packets[3],packets[4],packets[5]);
+  printf("Message data size: %d\n", strlen(packets));
+
     break;
   case ANALIZE_R:
     bcc2_destuffing(bcc_data);
     unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
     data_destuffing(packets, sizeof(packets), final_size);
+  	printf("Message data: %x%x%x%x\n", packets[0],packets[1],packets[2],packets[3]);
 
     if (bcc_data == bcc2_calc(packets, strlen((const char *)packets))) {
       if (flag_answer == C_S0)
@@ -410,13 +416,6 @@ int main(int argc, char *argv[]) {
     return -5;
   }
 
-  char cenas[5] = {0x45, 0x7E, 0x5E, 0x67, 0x34};
-  int final;
-  unsigned char *data_destuffed = data_destuffing(cenas, 5, &final);
-  printf("Stuffed array:\n");
-  for (int i = 0; i < final; i++) {
-    printf("data_stuffed[%d]: %x, %d\n", i, data_destuffed[i], final);
-  }
 
   if (atoi(argv[2]) == 0) {
     char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE};

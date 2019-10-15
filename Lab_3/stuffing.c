@@ -28,12 +28,12 @@ char *data_stuffing(char *data, int size, int *final_size) {
     if (data[i] == FLAG) {
       stuffed_data = (char *)realloc(stuffed_data, ++(*final_size));
       stuffed_data[j] = ESCAPE;
-      stuffed_data[j + 1] = ESC_ESC;
+      stuffed_data[j + 1] = FLAG_ESC;
       j += 2;
-    } else if (data[i] == FLAG) {
+    } else if (data[i] == ESCAPE) {
       stuffed_data = (char *)realloc(stuffed_data, ++(*final_size));
       stuffed_data[j] = ESCAPE;
-      stuffed_data[j + 1] = FLAG_ESC;
+      stuffed_data[j + 1] = ESC_ESC;
       j += 2;
     } else {
       stuffed_data[j] = data[i];
@@ -54,9 +54,9 @@ unsigned char *data_destuffing(char *data, int size, unsigned *final_size) {
     if (data[i] == ESCAPE) {
       stuffed_data = (unsigned char *)realloc(stuffed_data, --(*final_size));
       if (data[i + 1] == FLAG_ESC)
-        stuffed_data[j] = ESCAPE;
-      else
         stuffed_data[j] = FLAG;
+      else
+        stuffed_data[j] = ESCAPE;
       i += 2;
     } else {
       stuffed_data[j] = data[i];
