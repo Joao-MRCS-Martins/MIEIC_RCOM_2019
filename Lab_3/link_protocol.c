@@ -412,49 +412,46 @@ int llclose(int fd, int flag) {
   return 0;
 }
 
-int main(int argc, char *argv[]) {
-  if (argc < 3) {
-    printf("Wrong arguments.\n");
-    return -5;
-  }
+// int main(int argc, char *argv[]) {
+//   if (argc < 3) {
+//     printf("Wrong arguments.\n");
+//     return -5;
+//   }
 
-<<<<<<< HEAD
-	int fd = llopen(atoi(argv[1]), atoi(argv[2]));
-=======
-  int fd = llopen(atoi(argv[1]), atoi(argv[2]));
+// 	int fd = llopen(atoi(argv[1]), atoi(argv[2]));
 
->>>>>>> fcab7d638ca4f0c0777130e0ada1dd2655e08f63
-  if (atoi(argv[2]) == 0) {
-    char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE,FLAG};
-    int n = llwrite(fd, mensagem, 4);
-  } else {
-    char mensage[255];
-    int n = llread(fd, mensage);
-    printf("n: %d\n", n);
-  }
-  return llclose(fd, atoi(argv[2]));
+//   if (atoi(argv[2]) == 0) {
+//     char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE,FLAG};
+//     int n = llwrite(fd, mensagem, 4);
+//   } else {
+//     char mensage[255];
+//     int n = llread(fd, mensage);
+//     printf("n: %d\n", n);
+//   }
+//   return llclose(fd, atoi(argv[2]));
+// }
 
-  // char cenas[5] = {0x45, 0x7D, 0x5D, 0x67, 0x34};
-  // int final;
-  // unsigned char *data_destuffed = data_destuffing(cenas, 5, &final);
-  // printf("Stuffed array:\n");
-  // for (int i = 0; i < final; i++) {
-  //   printf("data_stuffed[%d]: %x, %d\n", i, data_destuffed[i], final);
-  // }
-  // unsigned char *bcc2 = (unsigned char*) malloc(sizeof(unsigned char));
-  // *bcc2 = FLAG;
-  // unsigned char * stuffed = bcc2_stuffing(bcc2);
-  // printf("BCC stuffed: %x%x\n",stuffed[0],stuffed[1]);
+//   // char cenas[5] = {0x45, 0x7D, 0x5D, 0x67, 0x34};
+//   // int final;
+//   // unsigned char *data_destuffed = data_destuffing(cenas, 5, &final);
+//   // printf("Stuffed array:\n");
+//   // for (int i = 0; i < final; i++) {
+//   //   printf("data_stuffed[%d]: %x, %d\n", i, data_destuffed[i], final);
+//   // }
+//   // unsigned char *bcc2 = (unsigned char*) malloc(sizeof(unsigned char));
+//   // *bcc2 = FLAG;
+//   // unsigned char * stuffed = bcc2_stuffing(bcc2);
+//   // printf("BCC stuffed: %x%x\n",stuffed[0],stuffed[1]);
 
-  // char cenas [5] = {0x45,0x7E,0x12,0x7D,0x7E};
-  // int final;
-  // unsigned char *data_stuffed = data_stuffing(cenas,5,&final);
-  // printf("Stuffed array:\n");
-  // for(int i = 0; i < final; i++) {
-  // 	printf("data_stuffed[%d]: %x\n",i,data_stuffed[i]);
-  // }
+//   // char cenas [5] = {0x45,0x7E,0x12,0x7D,0x7E};
+//   // int final;
+//   // unsigned char *data_stuffed = data_stuffing(cenas,5,&final);
+//   // printf("Stuffed array:\n");
+//   // for(int i = 0; i < final; i++) {
+//   // 	printf("data_stuffed[%d]: %x\n",i,data_stuffed[i]);
+//   // }
 
-  // free(bcc2);
-  // free(stuffed);
-  // free(data_stuffed);
-}
+//   // free(bcc2);
+//   // free(stuffed);
+//   // free(data_stuffed);
+// }

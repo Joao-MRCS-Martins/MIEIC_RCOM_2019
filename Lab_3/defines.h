@@ -1,6 +1,7 @@
 #ifndef _DEFINES_H_
 #define _DEFINES_H_
 
+///////////////// LINK LAYER /////////////////////////////
 // HARDWARE
 #define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
@@ -70,7 +71,8 @@
 // ERROR MESSAGES
 #define INVALID_PORT -1
 #define INVALID_ACTOR -2
-#define TIMEOUT_ERROR -3
+#define INVALID_ARGS -3
+#define TIMEOUT_ERROR -4
 
 struct control_frame {
   unsigned char flag_i;
@@ -89,6 +91,39 @@ struct info_frame {
   int data_size;
   unsigned char *bcc2;
   unsigned char flag_f;
+};
+
+///// APPLICATION LAYER /////                                                                                                 
+#define MAX_SIZE 4096 
+
+struct data_packet {                                                                                                  
+  unsigned char C ;                                                                                                 
+  unsigned char N;                                                                                                  
+  unsigned char L2;                                                                                                 
+  unsigned char L1;                                                                                                 
+  char * data;
+};
+
+struct control_packet {
+  unsigned char C;
+  struct tlv **tlvs;
+};
+
+struct tlv {
+  unsigned char T;
+  unsigned char L;
+  unsigned char V;
+};
+
+struct link_layer {
+  int port; /*Dispositivo /dev/ttySx, x = 0, 1*/
+  int baudRate; /*Velocidade de transmissão*/
+  unsigned int sequenceNumber; /*Número de sequência da trama: 0, 1*/
+  unsigned int timeout; /*Valor do temporizador: 1 s*/
+  unsigned int numTransmissions; /*Número de tentativas em caso de falha*/
+  char frame[MAX_SIZE];
+ /*Trama*/
+
 };
 
 #endif //_DEFINES_H_
