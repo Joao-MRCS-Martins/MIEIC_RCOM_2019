@@ -42,7 +42,7 @@ void getControlPacket(char *filename, int size, struct control_packet * packet) 
 
 int senderApp(int port, char * file) {
   struct control_packet c_packet;
-  //abrir ficheiro
+  
   int data_size;
   char * data = getFileData(file, &data_size);
 
@@ -51,21 +51,22 @@ int senderApp(int port, char * file) {
     printf("%c\n",data[i]);
   }
   
-  //preparar pacote de controlo start e end
   getControlPacket(file,data_size,&c_packet);
   // printf("Packet C:%x\nPacket T1: %x\nPacket L1:%x\nPacket V1: %s\nPacket T2: %x\nPacket L2:%x\nPacket V2: %s\n",
   //         c_packet.C,c_packet.T1,c_packet.L1,c_packet.V1,c_packet.T2,c_packet.L2,c_packet.V2);
   
   int fd = llopen(port,TRANSMITTER);
   printf("fd: %d\n",fd);
-  //abrir ligacao llopen
-  //preparar pacotes de dados
-  //enviar pacote de controlo start
-  //enviar pacotes de dados com llwrite, esperando pela sua conclusao
-  //enviar pacote de controlo end
-  //terminar ligacao llclose
   
+  //enviar pacote de controlo start
+  
+  //enviar pacotes de dados com llwrite, esperando pela sua conclusao
+  
+  //enviar pacote de controlo end
+  
+  //terminar ligacao llclose
   free(data);
+  llclose(fd,TRANSMITTER);
   return 0;
 }
 
