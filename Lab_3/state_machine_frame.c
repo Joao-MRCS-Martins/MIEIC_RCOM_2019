@@ -1,4 +1,9 @@
 #include "./state_machine_frame.h"
+#include <stdio.h>
+
+int i = 0;
+unsigned char aux1 = '0';
+unsigned char aux2 = '0';
 
 void state_machine(int *state, unsigned char info,
                    struct header_fields *message) {
@@ -53,12 +58,9 @@ void state_machine(int *state, unsigned char info,
   }
 }
 
-void state_machine_I(int *state, unsigned char info, char *packets,
+void state_machine_I(int *state, unsigned char info, unsigned char *packets,
                      unsigned char *bcc_data, int C) {
-  int i = 0;
-  int j = 0;
-  unsigned char aux1 = '0';
-  unsigned char aux2 = '0';
+
   switch (*state) {
   case START_S:
     if (info == FLAG) {
@@ -95,22 +97,23 @@ void state_machine_I(int *state, unsigned char info, char *packets,
       *state = START_S;
     break;
   case BCC_RCV:
-    if (info != FLAG) {
+    if (info != FLAG && info !=0) {
       aux1 = info;
-      j++;
       i++;
       *state = INFO;
     }
     break;
   case INFO:
     if (info != FLAG) {
-      if (j % 2 == 0) {
-        packets[i - 1] = aux1;
-        packets[i] = aux2;
+      if (i % 2 == 0) {
+        packets[i - 2] = aux1;
+        packets[i-1] = aux2;
+        printf("packets %x %x, i %d\n", packets[i-2], packets[i-1],i);
         aux1 = info;
       } else
+      {
         aux2 = info;
-
+      }
       i++;
     } else {
 
@@ -119,8 +122,10 @@ void state_machine_I(int *state, unsigned char info, char *packets,
         bcc_data[1] = aux2;
       } else {
         bcc_data[0] = aux2;
-        packets[i] = aux1;
+        packets[i-1] = aux1;
       }
+
+
       *state = STOP_I;
     }
     break;

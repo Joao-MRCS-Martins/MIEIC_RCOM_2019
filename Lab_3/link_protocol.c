@@ -180,11 +180,11 @@ int llwrite(int fd, char *buffer, int length) {
   unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2);
   message.bcc2 = bcc2_stuffed;
 
-printf("bananans\n");
 	int datasize = 0;
   // byte stuffing on file data
+
   message.data = data_stuffing(buffer, length,&datasize);
-printf("bananans\n");
+
   // prepare reply processing
   header.A_EXCT = A_SENDER;
   header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
@@ -226,7 +226,7 @@ printf("bananans\n");
   return length;
 }
 
-int llread(int fd, char *packets) {
+int llread(int fd, unsigned char *packets) {
   // state machine
   int state = 0;
   int REJ1 = 0;
@@ -252,7 +252,6 @@ int llread(int fd, char *packets) {
       printf("reading state: %d\n", state_read);
     }
     state = ANALIZE_R;
-    printf("Received message: %s\n", packets);
 
 
   printf("Message data: %x%x%x%x%x%x\n", packets[0],packets[1],packets[2],packets[3],packets[4],packets[5]);
@@ -420,7 +419,10 @@ int main(int argc, char *argv[]) {
   }
 
 
+
   int fd = llopen(atoi(argv[1]), atoi(argv[2]));
+
+
 
   if (atoi(argv[2]) == 0) {
     char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE,FLAG};
