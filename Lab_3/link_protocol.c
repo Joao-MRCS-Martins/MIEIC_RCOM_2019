@@ -197,8 +197,8 @@ int llwrite(int fd, unsigned char *buffer, int length) {
       read(fd, &aux, 1);
       printf("char read: %x\n", aux);
       state_machine(&state, aux, &header);
-      // if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
-      //   state = STOP_S;
+       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
+         break;
     }
 
     if (state == STOP_S)
@@ -249,11 +249,9 @@ int llread(int fd, unsigned char *packets) {
     unsigned char *bcc2 = bcc2_destuffing(bcc_data);
     int final_size;
     unsigned char *dest_data = data_destuffing(packets, datasize, &final_size);
-    
     unsigned char *packets_bcc = bcc2_calc(dest_data,final_size);
     
-    
-    if (bcc2 == bcc2_calc(packets, strlen((const char *)packets))) {
+    if (*bcc2 == *packets_bcc) {
       if (flag_answer == C_S0)
       {
         frame[2] = RR_R0;
