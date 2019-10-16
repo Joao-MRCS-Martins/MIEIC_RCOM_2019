@@ -55,7 +55,7 @@
 
 // EXECUTION SPECS
 #define MAX_RETRIES 3
-#define TIMEOUT 3
+#define TIMEOUT 5
 #define TIMEOUT_R 10
 #define MAX_BUFF 255
 #define MAX_REJ 3

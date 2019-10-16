@@ -192,7 +192,7 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     alrmSet = FALSE;
     alarm(TIMEOUT);
 
-    while (state != STOP_S) {
+    while (!alrmSet && state != STOP_S) {
       read(fd, &aux, 1);
       state_machine(&state, aux, &header);
        if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
@@ -272,23 +272,23 @@ int llread(int fd, unsigned char *packets) {
     printf("meias\n");
     printf("c in llread %x", frame[2]);
     write(fd, &frame, 5);
-    // if (frame[2] == REJ_R0) {
-    //   if (REJ0 < MAX_REJ) {
-    //     REJ0++;
-    //     state = READ_R;
-    //   } else {
-    //     REJ0 = 0;
-    //     // timeout (sai)
-    //   }
-    // } else if (frame[2] == REJ_R1) {
-    //   if (REJ1 < MAX_REJ) {
-    //     REJ1++;
-    //     state = READ_R;
-    //   } else {
-    //     REJ1 = 0;
-    //     // timeout (sai)
-    //   }
-    // } else
+    if (frame[2] == REJ_R0) {
+      if (REJ0 < MAX_REJ) {
+        REJ0++;
+        state = READ_R;
+      } else {
+        REJ0 = 0;
+        alarm(TIMEOUT_R);
+      }
+    } else if (frame[2] == REJ_R1) {
+      if (REJ1 < MAX_REJ) {
+        REJ1++;
+        state = READ_R;
+      } else {
+        REJ1 = 0;
+        alarm(TIMEOUT_R);
+      }
+    } else
       state = END_R;
   case END_R:
     break;
