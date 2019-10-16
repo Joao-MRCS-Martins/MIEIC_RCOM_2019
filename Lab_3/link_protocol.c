@@ -21,7 +21,7 @@ int n_try = 0;
 int alrmSet = FALSE;
 int n_seq = 0;
 
-unsigned char *bcc2_calc(char *message, int length) {
+unsigned char *bcc2_calc(unsigned char *message, int length) {
   unsigned char *bcc2 = (unsigned char *)malloc(sizeof(unsigned char));
   *bcc2 = message[0];
   for (int i = 1; i < length; i++) {
@@ -238,8 +238,6 @@ int llread(int fd, unsigned char *packets) {
   int flag_answer = 0;
 
   unsigned char *bcc_data = (unsigned char *)malloc(sizeof(unsigned char *));
-
-  struct control_frame message;
 
   signal(SIGALRM, alarmHandlerR);
 

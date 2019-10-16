@@ -125,7 +125,6 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
         packets[i-1] = aux1;
       }
 
-
       *state = STOP_I;
     }
     break;
