@@ -31,7 +31,7 @@ unsigned char *data_stuffing(unsigned char *data, int size, int *final_size) {
       stuffed_data[j + 1] = FLAG_ESC;
       j += 2;
     } else if (data[i] == ESCAPE) {
-      stuffed_data = (unsignedchar *)realloc(stuffed_data, ++(*final_size));
+      stuffed_data = (unsigned char *)realloc(stuffed_data, ++(*final_size));
       stuffed_data[j] = ESCAPE;
       stuffed_data[j + 1] = ESC_ESC;
       j += 2;
