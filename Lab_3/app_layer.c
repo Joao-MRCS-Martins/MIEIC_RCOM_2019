@@ -173,7 +173,31 @@ char *getStartInfo(int fd, char *filename, int *file_size) {
 }
 
 int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
-  printf("Port fd: %d Dest fd: %d Total read: %d\n",port_fd,dest_fd,*total_read);
+  char d_packet[MAX_PCKT_SIZE + 4];
+
+  if(llread(port_fd,d_packet) <0) {
+    printf("Failed to read data packet.\n");
+    return DATA_PCKT;
+  }
+
+  if(d_packet[0] != C_DATA) {
+    printf("Invalid packet type: %d. Expected: %d\n",d_packet[0],C_DATA);
+    return DATA_PCKT;
+  }
+
+  if(d_packet[1] != N_SEQ) {
+    printf("Packet out of sequence: %d. Expected: %d\n",d_packet[1],N_SEQ);
+    return DATA_PCKT;
+  }
+
+  int k = (d_packet[2] << 8) + d_packet[3];
+  if(write(dest_fd,&d_packet[4],k) <0) {
+    printf("Failed to write data into destination file.\n");
+    return DATA_PCKT;
+  }
+  
+  *total_read += k;
+  N_SEQ = (N_SEQ + 1) % 255;
   return 0;
 }
 
@@ -223,9 +247,9 @@ int receiverApp(int port) {
     return FILE_ERROR;
   }
 
-  // receber pacotes de dados e processar correcao llread
+  // receive packets and process them into file data
   int rcv_bytes = 0;
-  while(rcv_bytes < file_size) {
+  while(rcv_bytes != file_size) {
     if(getPacketInfo(fd,dest_fd,&rcv_bytes) < 0) {
       printf("Error receiving package.Terminating.\n");
       free(c_packet);
