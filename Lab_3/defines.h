@@ -97,7 +97,7 @@ struct info_frame {
 /////////////////////////////////////////////////////////
 
 ///// APPLICATION LAYER /////                                                                                                 
-#define MAX_PCKT_SIZE 500 /* Maximum of bytes in each packet */
+#define MAX_PCKT_SIZE 512 /* Maximum of bytes in each packet */
 #define MAX_BUFF 50 /* Maximum length of a file name */
 //PACKET HEADER SYMBOL
 #define C_DATA 1

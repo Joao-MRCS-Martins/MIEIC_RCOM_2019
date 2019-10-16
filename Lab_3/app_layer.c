@@ -8,6 +8,8 @@
 #include "./app_layer.h"
 #include "./link_protocol.h"
 
+unsigned char N_SEQ = 0;
+
 char *getFileData(char *filename, int *file_size) {
   FILE *f;
   struct stat meta;
@@ -49,7 +51,29 @@ unsigned char *getControlPacket(char *filename, int size) {
 }
 
 unsigned char *getDataPacket(char* data, int *index, int *packet_size, int data_size) {
-  return NULL;
+
+  if(*index == data_size) {
+    return NULL;
+  }
+
+  if(*index + MAX_PCKT_SIZE > data_size) {
+    *packet_size = data_size - *index;
+  }
+  else {
+    *packet_size = MAX_PCKT_SIZE;
+  }
+
+  unsigned char * packet = (unsigned char *) malloc((*packet_size + 4) * sizeof(unsigned char));
+  packet[0] = C_DATA;
+  packet[1] = N_SEQ;
+  packet[2] = *packet_size / 256;
+  packet[3] = *packet_size % 256;
+  for(int i = 0; i< *packet_size; i++) {
+    packet[4+i] = data[*index + i];
+  }
+  N_SEQ = (N_SEQ + 1) % 255;
+  *index += *packet_size;
+  return packet;
 }
 
 int senderApp(int port, char * file) {  
@@ -60,14 +84,13 @@ int senderApp(int port, char * file) {
   printf("c_packet: %s\n", &c_packet[9]);
   
   int fd = llopen(port,TRANSMITTER);
-  printf("fd: %d\n",fd);
   
   //enviar pacote de controlo start
   if(llwrite(fd,(char *) c_packet,data_size) < 0) {
     printf("Failed to send start packet.\n");
     return STRT_PCKT;
   }
-
+  
   int index = 0;
   int packet_size;
   unsigned char *d_packet;
@@ -87,16 +110,16 @@ int senderApp(int port, char * file) {
     free(d_packet);
   }
   
-  //enviar pacote de controlo end
+  //send end control packet
   c_packet[0] = C_END;
   if(llwrite(fd,(char *) c_packet,data_size) < 0) {
     printf("Failed to send end packet.\n");
     return END_PCKT;
   }
-  //terminar ligacao llclose
+  
+  //close connection llclose
   free(c_packet);
   free(data);
-  free(d_packet);
   llclose(fd,TRANSMITTER);
   return 0;
 }
