@@ -21,14 +21,13 @@ int n_try = 0;
 int alrmSet = FALSE;
 int n_seq = 0;
 
-unsigned char *bcc2_calc(unsigned char *message, int length) {
-  unsigned char *bcc2 = (unsigned char *)malloc(sizeof(unsigned char));
-  *bcc2 = message[0];
+void bcc2_calc(unsigned char *message, int length, unsigned char *bcc2) {
+  
+  bcc2[0] = message[0];
   for (int i = 1; i < length; i++) {
-    *bcc2 ^= message[i];
+    bcc2[0] ^= message[i];
   }
-
-  return bcc2;
+printf("bcc %x\n", bcc2[0]);
 }
 
 void alarmHandler() {
@@ -175,9 +174,14 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     m.c = C_S1;
   m.bcc1 = m.a ^ m.c;
 
+printf("bvaba\n");
   // bcc2 generation & stuffing
-  unsigned char *bcc2 = bcc2_calc(buffer, length);
-  unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2);
+  unsigned char bcc2;
+  bcc2_calc(buffer, length, &bcc2);
+printf("f\n");
+  unsigned char bcc2_stuffed[2];
+  bcc2_stuffing(bcc2, &bcc2_stuffed);
+printf("f\n");
   strcpy(m.bcc2, bcc2_stuffed);
 
 	int datasize = 0;
@@ -261,8 +265,10 @@ printf("hj\n");
     unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
     data_destuffing(packets, sizeof(packets), final_size);
   	printf("Message data: %x%x%x%x\n", packets[0],packets[1],packets[2],packets[3]);
+unsigned char bcc2_calcu[2];
+bcc2_calc(packets, strlen((const char *)packets),&bcc2_calcu);
 
-    if (bcc2 == bcc2_calc(packets, strlen((const char *)packets))) {
+if(bcc2 == bcc2_calc){
       if (flag_answer == C_S0)
         message.c = RR_R0;
       else

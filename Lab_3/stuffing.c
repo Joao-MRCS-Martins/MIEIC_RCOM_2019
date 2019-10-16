@@ -2,21 +2,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-unsigned char *bcc2_stuffing(unsigned char *bcc2) {
-  unsigned char *bcc2_stuffed;
-  if (*bcc2 == FLAG) {
-    bcc2_stuffed = (unsigned char *)malloc(2 * sizeof(unsigned char *));
+void bcc2_stuffing(unsigned char bcc2, unsigned char *bcc2_stuffed){
+  if (bcc2 == FLAG) {
     bcc2_stuffed[0] = ESCAPE;
     bcc2_stuffed[1] = FLAG_ESC;
-  } else if (*bcc2 == ESCAPE) {
-    bcc2_stuffed = (unsigned char *)malloc(2 * sizeof(unsigned char *));
+  } else if (bcc2 == ESCAPE) {
     bcc2_stuffed[0] = ESCAPE;
     bcc2_stuffed[1] = ESC_ESC;
   } else {
-    bcc2_stuffed = bcc2;
+printf("asasas\n");
+    bcc2_stuffed[0] = bcc2;
   }
-
-  return bcc2_stuffed;
 }
 
 unsigned char *data_stuffing(unsigned char *data, int size, int *final_size) {
