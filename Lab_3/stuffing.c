@@ -19,19 +19,19 @@ unsigned char *bcc2_stuffing(unsigned char *bcc2) {
   return bcc2_stuffed;
 }
 
-char *data_stuffing(char *data, int size, int *final_size) {
+unsigned char *data_stuffing(unsigned char *data, int size, int *final_size) {
   *final_size = size;
-  char *stuffed_data = (char *)malloc(size * sizeof(char));
+  unsigned char *stuffed_data = (unsigned char *)malloc(size * sizeof(unsigned char));
 
   int j = 0; // current position on stuffed array
   for (int i = 0; i < size; i++) {
     if (data[i] == FLAG) {
-      stuffed_data = (char *)realloc(stuffed_data, ++(*final_size));
+      stuffed_data = (unsigned char *)realloc(stuffed_data, ++(*final_size));
       stuffed_data[j] = ESCAPE;
       stuffed_data[j + 1] = FLAG_ESC;
       j += 2;
     } else if (data[i] == ESCAPE) {
-      stuffed_data = (char *)realloc(stuffed_data, ++(*final_size));
+      stuffed_data = (unsignedchar *)realloc(stuffed_data, ++(*final_size));
       stuffed_data[j] = ESCAPE;
       stuffed_data[j + 1] = ESC_ESC;
       j += 2;

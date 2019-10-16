@@ -48,6 +48,7 @@ int send_message() { return write(fd, &message, sizeof(struct control_frame)); }
 unsigned char bcc_calc(unsigned char a, unsigned char c) { return a ^ c; }
 
 int llopen(int port, int flag) {
+
   char port_path[MAX_BUFF];
   struct termios newtio;
   struct header_fields header;
@@ -86,7 +87,7 @@ int llopen(int port, int flag) {
   newtio.c_lflag = 0;
 
   newtio.c_cc[VTIME] = 0; /* inter-character timer unused */
-  newtio.c_cc[VMIN] = 5;  /* blocking read until 5 chars received */
+  newtio.c_cc[VMIN] = 1;  /* blocking read until 5 chars received */
 
   tcflush(fd, TCIOFLUSH);
 
@@ -301,6 +302,7 @@ int llread(int fd, unsigned char *packets) {
         REJ1 = 0;
         // timeout (sai)
       }
+
     }
     else
       state = END_R;
@@ -418,16 +420,14 @@ int main(int argc, char *argv[]) {
     return -5;
   }
 
-
-
   int fd = llopen(atoi(argv[1]), atoi(argv[2]));
 
-
-
   if (atoi(argv[2]) == 0) {
+	printf("gvhhj\n");
     char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE,FLAG};
     int n = llwrite(fd, mensagem, 4);
   } else {
+	printf("bananas\n");
     char mensage[255];
     int n = llread(fd, mensage);
     printf("n: %d\n", n);
