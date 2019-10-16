@@ -115,7 +115,6 @@ int llopen(int port, int flag) {
       printf("Message sent. Processing UA.\n");
       while (!alrmSet && state != STOP_S) {
         read(fd, &aux, 1);
-        printf("Char read: %x\n", aux);
         state_machine(&state, aux, &header);
       }
 
@@ -193,14 +192,12 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     alrmSet = FALSE;
     alarm(TIMEOUT);
 
-    while (!alrmSet || state != STOP_S) {
+    while (state != STOP_S) {
       read(fd, &aux, 1);
-      printf("char read: %x\n", aux);
       state_machine(&state, aux, &header);
        if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
          break;
     }
-
     if (state == STOP_S)
       break;
   } while (n_try < MAX_RETRIES);
@@ -229,9 +226,8 @@ int llread(int fd, unsigned char *packets) {
   unsigned char *bcc_data =  (unsigned char *)malloc(2 * sizeof(unsigned char));;
 
   signal(SIGALRM, alarmHandlerR);
-  int n = 0;
   int datasize = 0;
-  while(state != END_R || n >15)
+  while(state != END_R )
   {
   switch (state) {
   case READ_R:
@@ -273,6 +269,8 @@ int llread(int fd, unsigned char *packets) {
     state = WRITE_R;
     break;
   case WRITE_R:
+    printf("meias\n");
+    printf("c in llread %x", frame[2]);
     write(fd, &frame, 5);
     // if (frame[2] == REJ_R0) {
     //   if (REJ0 < MAX_REJ) {
@@ -295,7 +293,6 @@ int llread(int fd, unsigned char *packets) {
   case END_R:
     break;
   }
-  n++;
   }
   return strlen(packets);
 }

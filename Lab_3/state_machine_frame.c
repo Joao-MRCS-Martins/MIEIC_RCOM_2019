@@ -26,7 +26,6 @@ void state_machine(int *state, unsigned char info,
     break;
 
   case A_RCV:
-  printf("info %x\n", info);
     if (info == message->C_EXCT) {
       message->C_READ = info;
       *state = C_RCV;
