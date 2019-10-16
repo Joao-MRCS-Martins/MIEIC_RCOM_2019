@@ -99,6 +99,8 @@ struct info_frame {
 ///// APPLICATION LAYER /////                                                                                                 
 #define MAX_PCKT_SIZE 512 /* Maximum of bytes in each packet */
 #define MAX_BUFF 50 /* Maximum length of a file name */
+#define C_PCKT_SIZE 9 /* Known size (in bytes) of control packet (C,T1,L1,V1,T2,L2) */
+
 //PACKET HEADER SYMBOL
 #define C_DATA 1
 #define C_START 2
@@ -109,11 +111,13 @@ struct info_frame {
 #define T_NAME 1
 
 //LENGTH (TLV) PARAMETER
-#define L1_S 0x04
+#define L1_S 4
 
 // ERROR MASSAGES
 #define STRT_PCKT -6
 #define DATA_PCKT -7
 #define END_PCKT -8
+#define CONNECT_FAIL -9
+#define FILE_ERROR -10
 
 #endif //_DEFINES_H_

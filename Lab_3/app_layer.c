@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "./app_layer.h"
 #include "./link_protocol.h"
@@ -32,7 +33,7 @@ char *getFileData(char *filename, int *file_size) {
   return file_data;
 }
 
-unsigned char *getControlPacket(char *filename, int size) {
+unsigned char *makeControlPacket(char *filename, int size) {
   unsigned char * packet = (unsigned char *) malloc(9 * sizeof(unsigned char) + strlen(filename));
   packet[0] = C_START;
   packet[1] = T_SIZE;
@@ -50,7 +51,7 @@ unsigned char *getControlPacket(char *filename, int size) {
   return packet;
 }
 
-unsigned char *getDataPacket(char* data, int *index, int *packet_size, int data_size) {
+unsigned char *makeDataPacket(char* data, int *index, int *packet_size, int data_size) {
 
   if(*index == data_size) {
     return NULL;
@@ -80,12 +81,17 @@ int senderApp(int port, char * file) {
   int data_size;
   char * data = getFileData(file, &data_size);
   
-  unsigned char * c_packet = getControlPacket(file,data_size);
+  unsigned char * c_packet = makeControlPacket(file,data_size);
   printf("c_packet: %s\n", &c_packet[9]);
   
-  int fd = llopen(port,TRANSMITTER);
+  //open connection (llopen)
+  int fd;
+  if((fd = llopen(port,TRANSMITTER)) < 0) {
+    printf("Failed to open connection with receiver.\n");
+    return CONNECT_FAIL;
+  }
   
-  //enviar pacote de controlo start
+  //send start control packet
   if(llwrite(fd,(char *) c_packet,data_size) < 0) {
     printf("Failed to send start packet.\n");
     return STRT_PCKT;
@@ -95,7 +101,7 @@ int senderApp(int port, char * file) {
   int packet_size;
   unsigned char *d_packet;
   while(1) {
-    if((d_packet = getDataPacket(data,&index,&packet_size,data_size)) == NULL) {
+    if((d_packet = makeDataPacket(data,&index,&packet_size,data_size)) == NULL) {
       break;
     }
 
@@ -117,22 +123,130 @@ int senderApp(int port, char * file) {
     return END_PCKT;
   }
   
-  //close connection llclose
+  //close connection (llclose)
   free(c_packet);
   free(data);
-  llclose(fd,TRANSMITTER);
+  if(llclose(fd,TRANSMITTER) < 0) {
+    close(fd);
+    printf("Failed to close connection properly with receiver.\n");
+    return CONNECT_FAIL;
+  }
+
+  return 0;
+}
+
+char *getStartInfo(int fd, char *filename, int *file_size) {
+  char *c_packet = (char *) malloc((MAX_BUFF + 9) * sizeof(char));
+  
+  if(llread(fd,c_packet) <0) {
+    return NULL;
+  }
+
+  if(c_packet[0] != C_START) {
+    printf("Invalid stage: %d. Expected stage: %d\n",c_packet[0],C_START);
+    return NULL;
+  }
+
+  if(c_packet[1] != T_SIZE) {
+    printf("Invalid Type: %d. Expected Type: %d\n",c_packet[1],T_SIZE);
+    return NULL;
+  }
+
+  if(c_packet[2] != L1_S) {
+    printf("Invalid L1 size: %d. Expected size: %d\n",c_packet[2],L1_S);
+    return NULL;
+  }
+
+  *file_size = c_packet[3] << 24;
+  *file_size |= c_packet[4] << 16;
+  *file_size |= c_packet[5] << 8;
+  *file_size |= c_packet[6];
+
+  if(c_packet[7] != T_NAME) {
+    printf("Invalid Type: %d. Expected Type: %d\n",c_packet[7],T_NAME);
+    return NULL;
+  }
+
+  strncpy(filename,&c_packet[9],c_packet[8]);
+
+  return c_packet;
+}
+
+int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
+  printf("Port fd: %d Dest fd: %d Total read: %d\n",port_fd,dest_fd,*total_read);
+  return 0;
+}
+
+int checkEndInfo(int fd, char *c_packet) {
+  char e_packet[MAX_BUFF + 9];
+  if(llread(fd,e_packet) <0) {
+    return END_PCKT;
+  }
+
+  if(e_packet[0] != C_END) {
+     printf("Invalid stage: %d. Expected stage: %d\n",e_packet[0],C_END);
+    return END_PCKT;
+  }
+
+  if(strcmp(&e_packet[1],&c_packet[1]) != 0) {
+    printf("End control packet doesn't match start control packet. Errors in data expected.\n");
+    return END_PCKT;
+  }
+
   return 0;
 }
 
 int receiverApp(int port) {
-  //abrir ligacao llopen
-  //receber pacote de controlo start llread
-  //abrir/criar ficheiro indicado no pacote de controlo start
-  //processar e preparar rececao de pacotes de dados
-  //receber pacotes de dados e processar correcao llread
-  //receber pacote de controlo end e validar
-  //terminar ligacao llclose
-  printf("port: %d\n",port);
+  //open connection (llopen)
+  int fd;
+  if((fd = llopen(port,TRANSMITTER)) < 0) {
+    printf("Failed to open connection with receiver.\n");
+    return CONNECT_FAIL;
+  }
+
+  //get control packet info to start
+  char filename[MAX_BUFF];
+  int file_size;
+  char *c_packet;
+  if((c_packet = getStartInfo(fd,filename,&file_size)) == NULL) {
+    close(fd);
+    return STRT_PCKT;
+  }
+  // printf("filename: %s\nfile_size: %d\n",filename,file_size);
+
+  // open/create file indicated in start control packet
+  int dest_fd = open(filename,O_WRONLY|O_CREAT|O_APPEND|O_TRUNC);
+  if(dest_fd < 0) {
+    printf("Failed to create new file.\n");
+    free(c_packet);
+    close(fd);
+    return FILE_ERROR;
+  }
+
+  // receber pacotes de dados e processar correcao llread
+  int rcv_bytes = 0;
+  while(rcv_bytes < file_size) {
+    if(getPacketInfo(fd,dest_fd,&rcv_bytes) < 0) {
+      printf("Error receiving package.Terminating.\n");
+      free(c_packet);
+      close(dest_fd);
+      close(fd);
+      return DATA_PCKT;
+    }
+  }
+
+  // receive end control packet and validate with start packet
+  if(checkEndInfo(fd,c_packet) < 0) {
+    close(fd);
+    return END_PCKT;
+  }
+
+  // close connection (llclose)
+  if(llclose(fd,TRANSMITTER) < 0) {
+    close(fd);
+    printf("Failed to close connection properly with receiver.\n");
+    return CONNECT_FAIL;
+  }
   return 0;
 }
 

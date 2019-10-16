@@ -4,8 +4,12 @@
 #include "./defines.h"
 
 char *getFileData(char *filename, int *file_size);
-unsigned char *getControlPacket(char *filename, int size);
-unsigned char *getDataPacket(char* data, int *index, int *packet_size, int data_size);
+unsigned char *makeControlPacket(char *filename, int size);
+unsigned char *makeDataPacket(char* data, int *index, int *packet_size, int data_size);
 int senderApp(int port, char *file);
+
+char *getStartInfo(int fd, char *filename, int *file_size);
+int getPacketInfo(int port_fd,int dest_fd, int *total_read);
+int checkEndInfo(int fd, char *control_packet);
 int receiverApp(int port);
 #endif
