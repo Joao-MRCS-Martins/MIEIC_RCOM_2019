@@ -53,30 +53,37 @@ unsigned char *data_destuffing(unsigned char *data, int size,
   *final_size = size;
   unsigned char *stuffed_data =
       (unsigned char *)malloc(size * sizeof(unsigned char));
-
+  
+  int sizeless = 0;
   int j = 0;
+
   for (int i = 0; i < size;) {
-    if (data[i] == ESCAPE) {
-      stuffed_data = (unsigned char *)realloc(stuffed_data, --(*final_size));
-      if (data[i + 1] == FLAG_ESC)
-        stuffed_data[j] = FLAG;
-      else
-        stuffed_data[j] = ESCAPE;
-      i += 2;
-    } else {
-      stuffed_data[j] = data[i];
+    if (data[i] == ESCAPE && data[i+1]== FLAG_ESC)
+    {
+      stuffed_data[j] =FLAG;
+      i+=2;
+      sizeless--;
+    }
+    else if(data[i] == ESCAPE && data[i+1]== ESC_ESC)
+    {
+      stuffed_data[j] =ESCAPE;
+      i+=2;
+      sizeless--;
+    }
+    else
+    {
+      stuffed_data[j]= data[i];
       i++;
     }
-
-    j++;
+    j++;  
   }
+  stuffed_data = (unsigned char *)realloc(stuffed_data,(*final_size) - sizeless);
 
   return stuffed_data;
 }
 
 unsigned char *bcc2_destuffing(unsigned char *bcc2) {
   unsigned char *bcc2_stuffed;
-
   if (bcc2[0] == ESCAPE) {
 
     bcc2_stuffed = (unsigned char *)malloc(sizeof(unsigned char *));
@@ -88,6 +95,5 @@ unsigned char *bcc2_destuffing(unsigned char *bcc2) {
   } else {
     bcc2_stuffed = bcc2;
   }
-
   return bcc2_stuffed;
 }

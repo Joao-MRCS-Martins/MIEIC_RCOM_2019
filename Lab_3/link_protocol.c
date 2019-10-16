@@ -24,6 +24,7 @@ unsigned char *bcc2_calc(unsigned char *message, int length) {
   unsigned char *bcc2 = (unsigned char *)malloc(sizeof(unsigned char));
   *bcc2 = message[0];
   for (int i = 1; i < length; i++) {
+
     *bcc2 ^= message[i];
   }
 
@@ -192,12 +193,12 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     alrmSet = FALSE;
     alarm(TIMEOUT);
 
-    while (!alrmSet && state != STOP_S) {
+    while (!alrmSet || state != STOP_S) {
       read(fd, &aux, 1);
       printf("char read: %x\n", aux);
       state_machine(&state, aux, &header);
-      if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
-        break;
+      // if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
+      //   state = STOP_S;
     }
 
     if (state == STOP_S)
@@ -225,10 +226,11 @@ int llread(int fd, unsigned char *packets) {
   int state_read = 0;
   int flag_answer = 0;
 
-  unsigned char bcc_data[2];
+  unsigned char *bcc_data =  (unsigned char *)malloc(2 * sizeof(unsigned char));;
 
   signal(SIGALRM, alarmHandlerR);
   int n = 0;
+  int datasize = 0;
   while(state != END_R || n >15)
   {
   switch (state) {
@@ -237,7 +239,7 @@ int llread(int fd, unsigned char *packets) {
       alarm(TIMEOUT_R);
       read(fd, &buffer, 1);
       printf("read char %x\n", buffer);
-      state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer);
+      state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer, &datasize);
     }
     state = ANALIZE_R;
 
@@ -245,12 +247,17 @@ int llread(int fd, unsigned char *packets) {
   case ANALIZE_R:
   printf("\n");
     unsigned char *bcc2 = bcc2_destuffing(bcc_data);
-    unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
-    data_destuffing(packets, sizeof(packets), final_size);
-
+    int final_size;
+    unsigned char *dest_data = data_destuffing(packets, datasize, &final_size);
+    
+    unsigned char *packets_bcc = bcc2_calc(dest_data,final_size);
+    
+    
     if (bcc2 == bcc2_calc(packets, strlen((const char *)packets))) {
       if (flag_answer == C_S0)
+      {
         frame[2] = RR_R0;
+      }
       else
         frame[2] = RR_R1;
 
@@ -265,7 +272,6 @@ int llread(int fd, unsigned char *packets) {
     frame[1] = A_SENDER;
     frame[3] = bcc_calc(frame[1], frame[2]);
     frame[4] = FLAG;
-
     state = WRITE_R;
     break;
   case WRITE_R:

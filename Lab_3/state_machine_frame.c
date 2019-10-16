@@ -26,6 +26,7 @@ void state_machine(int *state, unsigned char info,
     break;
 
   case A_RCV:
+  printf("info %x\n", info);
     if (info == message->C_EXCT) {
       message->C_READ = info;
       *state = C_RCV;
@@ -59,7 +60,7 @@ void state_machine(int *state, unsigned char info,
 }
 
 void state_machine_I(int *state, unsigned char info, unsigned char *packets,
-                     unsigned char *bcc_data, int C) {
+                     unsigned char *bcc_data, int C, int *datasize) {
 
   switch (*state) {
   case START_S:
@@ -114,17 +115,28 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
       }
       i++;
     } else {
-
-      if (aux1 == ESCAPE) {
-        bcc_data[0] = aux1;
-        bcc_data[1] = aux2;
-      } else if (aux2 != 0) {
-        bcc_data[0] = aux2;
-        packets[i - 1] = aux1;
-      } else {
-        bcc_data[0] = aux1;
+      if(i %2 ==0)
+      {
+        if(aux1 == ESCAPE)
+        {
+          bcc_data[0] = aux1;
+          bcc_data[1] = aux2;
+        }
+        else
+        packets[i] = aux1;
+        bcc_data[0] = aux2;   
       }
-
+      else{
+        if(aux2 == ESCAPE)
+        {
+          bcc_data[0] = aux2;
+          bcc_data[1] = aux1;
+        }
+        else
+        packets[i] = aux2;
+        bcc_data[0] = aux1;   
+      }
+      *datasize = i-2;
       *state = STOP_I;
     }
     break;
