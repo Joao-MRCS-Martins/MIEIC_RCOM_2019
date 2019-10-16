@@ -125,7 +125,6 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
         bcc_data[0] = aux1;
       }
 
-      printf("hkgdfkh\n");
       *state = STOP_I;
     }
     break;

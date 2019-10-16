@@ -228,7 +228,9 @@ int llread(int fd, unsigned char *packets) {
   unsigned char bcc_data[2];
 
   signal(SIGALRM, alarmHandlerR);
-
+  int n = 0;
+  while(state != END_R || n >15)
+  {
   switch (state) {
   case READ_R:
     while (state_read != STOP_I) {
@@ -237,13 +239,11 @@ int llread(int fd, unsigned char *packets) {
       printf("read char %x\n", buffer);
       state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer);
     }
-    printf("patatatat\n");
     state = ANALIZE_R;
 
     break;
   case ANALIZE_R:
-    printf("\n");
-    printf("gtgtgtg\n");
+  printf("\n");
     unsigned char *bcc2 = bcc2_destuffing(bcc_data);
     unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
     data_destuffing(packets, sizeof(packets), final_size);
@@ -269,28 +269,29 @@ int llread(int fd, unsigned char *packets) {
     state = WRITE_R;
     break;
   case WRITE_R:
-    printf("meiasuyfg\n");
     write(fd, &frame, 5);
-    if (frame[2] == REJ_R0) {
-      if (REJ0 < MAX_REJ) {
-        REJ0++;
-        state = READ_R;
-      } else {
-        REJ0 = 0;
-        // timeout (sai)
-      }
-    } else if (frame[2] == REJ_R1) {
-      if (REJ1 < MAX_REJ) {
-        REJ1++;
-        state = READ_R;
-      } else {
-        REJ1 = 0;
-        // timeout (sai)
-      }
-    } else
+    // if (frame[2] == REJ_R0) {
+    //   if (REJ0 < MAX_REJ) {
+    //     REJ0++;
+    //     state = READ_R;
+    //   } else {
+    //     REJ0 = 0;
+    //     // timeout (sai)
+    //   }
+    // } else if (frame[2] == REJ_R1) {
+    //   if (REJ1 < MAX_REJ) {
+    //     REJ1++;
+    //     state = READ_R;
+    //   } else {
+    //     REJ1 = 0;
+    //     // timeout (sai)
+    //   }
+    // } else
       state = END_R;
   case END_R:
     break;
+  }
+  n++;
   }
   return strlen(packets);
 }
