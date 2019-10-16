@@ -20,13 +20,15 @@ int n_try = 0;
 int alrmSet = FALSE;
 int n_seq = 0;
 
-void bcc2_calc(unsigned char *message, int length, unsigned char *bcc2) {
-  
-  bcc2[0] = message[0];
+unsigned char *bcc2_calc(unsigned char *message, int length) {
+  unsigned char *bcc2 = (unsigned char *)malloc(sizeof(unsigned char));
+  *bcc2 = message[0];
   for (int i = 1; i < length; i++) {
-    bcc2[0] ^= message[i];
+
+    *bcc2 ^= message[i];
   }
-printf("bcc %x\n", bcc2[0]);
+
+  return bcc2;
 }
 
 void alarmHandler() {
@@ -168,21 +170,17 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     frame[2] = C_S1;
   frame[3] = frame[1] ^ frame[2];
 
-  // bcc2 generation & stuffing
-  unsigned char bcc2;
-  bcc2_calc(buffer, length, &bcc2);
-  unsigned char bcc2_stuffed[2];
-  bcc2_stuffing(bcc2, &bcc2_stuffed);
-  strcpy(m.bcc2, bcc2_stuffed);
-
-	int datasize = 0;
   // byte stuffing on file data
-unsigned char data[256];
-data_stuffing(buffer, length,&datasize,&data);
-printf("size %d\n", datasize);
-  strncpy(m.data, data,datasize);
-printf("size2 %d\n", sizeof(m.data));
+  int datasize = 0;
+  unsigned char *data = data_stuffing(buffer, length, &datasize);
+  strncpy(&frame[4], data, datasize);
 
+  // bcc2 generation & stuffing
+  int bccsize = 0;
+  unsigned char *bcc2 = bcc2_calc(buffer, length);
+  unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2, &bccsize);
+  strncpy(&frame[4 + datasize], bcc2_stuffed, bccsize);
+  frame[4 + datasize + bccsize] = FLAG;
 
   // prepare reply processing
   header.A_EXCT = A_SENDER;
@@ -190,10 +188,7 @@ printf("size2 %d\n", sizeof(m.data));
   n_try = 0;
 
   do {
-printf("data size %d\n", sizeof(m.data));
-    int r = write(fd, &m, sizeof(m));
-  printf("Message data: %x%x%x%x%x%x\n", m.data[0],m.data[1],m.data[2],m.data[3],m.data[4],m.data[5]);
-    printf("Sent message %d.\n",r);
+    write(fd, &frame, datasize + bccsize + 5);
     alrmSet = FALSE;
     alarm(TIMEOUT);
 
@@ -210,7 +205,7 @@ printf("data size %d\n", sizeof(m.data));
   if (n_try == MAX_RETRIES)
     return TIMEOUT_ERROR;
 
-  n_seq ^= 1; // PLACE WHERE RR IS CORRECTLY RECEIVED
+  n_seq ^= 1;
 
   printf("Written successfully.\n");
   return length;
@@ -229,85 +224,49 @@ int llread(int fd, unsigned char *packets) {
   int flag_answer = 0;
 
   unsigned char *bcc_data = (unsigned char *)malloc(2 * sizeof(unsigned char));
-  ;
+  
 
   signal(SIGALRM, alarmHandlerR);
   int datasize = 0;
   while (state != END_R) {
     switch (state) {
-    case READ_R:
-      while (state_read != STOP_I) {
-        alarm(TIMEOUT_R);
-        read(fd, &buffer, 1);
-        printf("read char %x\n", buffer);
-        state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer,
-                        &datasize);
-      }
-      state = ANALIZE_R;
+      case READ_R:
+        while (state_read != STOP_I) {
+          alarm(TIMEOUT_R);
+          read(fd, &buffer, 1);
+          printf("read char %x\n", buffer);
+          state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer,
+                          &datasize);
+        }
+        state = ANALIZE_R;
 
-      break;
-    case ANALIZE_R:
-      printf("\n");
-      unsigned char *bcc2 = bcc2_destuffing(bcc_data);
-      int final_size;
-      unsigned char *dest_data =
-          data_destuffing(packets, datasize, &final_size);
-      unsigned char *packets_bcc = bcc2_calc(dest_data, final_size);
+        break;
+      case ANALIZE_R:
+        printf("\n");
+        unsigned char *bcc2 = bcc2_destuffing(bcc_data);
+        int final_size;
+        unsigned char *dest_data =
+            data_destuffing(packets, datasize, &final_size);
+        unsigned char *packets_bcc = bcc2_calc(dest_data, final_size);
 
-      if (*bcc2 == *packets_bcc) {
-        if (flag_answer == C_S0) {
-          frame[2] = RR_R0;
-        } else
-          frame[2] = RR_R1;
+        if (*bcc2 == *packets_bcc) {
+          if (flag_answer == C_S0) {
+            frame[2] = RR_R0;
+          } else
+            frame[2] = RR_R1;
+        }
+        else {
+          if (flag_answer == C_S0)
+            frame[2] = REJ_R0;
+          else
+           frame[2] = REJ_R1;
+        }
 
-
-    break;
-  case ANALIZE_R:
-printf("hj\n");
-    unsigned char bcc2[2];
-	strcpy(bcc2,bcc2_destuffing(bcc_data));
-    unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
-    //data_destuffing(packets, sizeof(packets), final_size);
-  	printf("Message data: %x%x%x%x\n", packets[0],packets[1],packets[2],packets[3]);
-unsigned char bcc2_calcu[2];
-bcc2_calc(packets, strlen((const char *)packets),&bcc2_calcu);
-
-if(bcc2 == bcc2_calc){
-      if (flag_answer == C_S0)
-        message.c = RR_R0;
-      else
-        message.c = RR_R1;
-
-    } else {
-      if (flag_answer == C_S0)
-        message.c = REJ_R0;
-      else
-        message.c = REJ_R1;
-    }
-
-    message.flag_i = message.flag_f = FLAG;
-    message.a = A_SENDER;
-    strcpy(message.bcc, bcc_calc(message.a, message.c));
-    state = WRITE_R;
-    break;
-  case WRITE_R:
-    write(fd, &message, sizeof(struct control_frame));
-    if (message.c == REJ_R0) {
-      if (REJ0 < MAX_REJ) {
-        REJ0++;
-        state = READ_R;
-      } else {
-        if (flag_answer == C_S0)
-          frame[2] = REJ_R0;
-        else
-          frame[2] = REJ_R1;
-      }
-
-      frame[0] = FLAG;
-      frame[1] = A_SENDER;
-      frame[3] = bcc_calc(frame[1], frame[2]);
-      frame[4] = FLAG;
-      state = WRITE_R;
+        frame[0] = FLAG;
+        frame[1] = A_SENDER;
+        frame[3] = bcc_calc(frame[1], frame[2]);
+        frame[4] = FLAG;
+        state = WRITE_R;
       break;
     case WRITE_R:
       printf("meias\n");
@@ -332,7 +291,7 @@ if(bcc2 == bcc2_calc){
       } else
         state = END_R;
     case END_R:
-      break;
+        break;
     }
   }
   return strlen(packets);
