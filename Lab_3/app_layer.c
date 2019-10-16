@@ -30,42 +30,73 @@ char *getFileData(char *filename, int *file_size) {
   return file_data;
 }
 
-void getControlPacket(char *filename, int size, struct control_packet * packet) {
-  packet->C = C_START;
-  packet->T1 = T_SIZE;
-  packet->L1 = sizeof(int);
-  sprintf((char *) packet->V1,"%d",size);
-  packet->T2 = T_NAME;
-  packet->L2 = strlen(filename);
-  strcpy((char *) packet->V2,filename);
+unsigned char *getControlPacket(char *filename, int size) {
+  unsigned char * packet = (unsigned char *) malloc(9 * sizeof(unsigned char) + strlen(filename));
+  packet[0] = C_START;
+  packet[1] = T_SIZE;
+  packet[2] = L1_S;
+  packet[3] = (size >> 24) & 0xFF;
+  packet[4] = (size >> 16) & 0xFF;
+  packet[5] = (size >> 8) & 0xFF;
+  packet[6] = size & 0xFF;
+  packet[7] = T_NAME;
+  packet[8] = strlen(filename);
+  for(int i = 0; i < packet[8]; i++) {
+    packet[9+i] = filename[i];
+  }
+
+  return packet;
 }
 
-int senderApp(int port, char * file) {
-  struct control_packet c_packet;
-  
+unsigned char *getDataPacket(char* data, int *index, int *packet_size, int data_size) {
+  return NULL;
+}
+
+int senderApp(int port, char * file) {  
   int data_size;
   char * data = getFileData(file, &data_size);
-
-
-  for(int i = 0; i<data_size;i++) {
-    printf("%c\n",data[i]);
-  }
   
-  getControlPacket(file,data_size,&c_packet);
-  // printf("Packet C:%x\nPacket T1: %x\nPacket L1:%x\nPacket V1: %s\nPacket T2: %x\nPacket L2:%x\nPacket V2: %s\n",
-  //         c_packet.C,c_packet.T1,c_packet.L1,c_packet.V1,c_packet.T2,c_packet.L2,c_packet.V2);
+  unsigned char * c_packet = getControlPacket(file,data_size);
+  printf("c_packet: %s\n", &c_packet[9]);
   
   int fd = llopen(port,TRANSMITTER);
   printf("fd: %d\n",fd);
   
   //enviar pacote de controlo start
-  
-  //enviar pacotes de dados com llwrite, esperando pela sua conclusao
+  if(llwrite(fd,(char *) c_packet,data_size) < 0) {
+    printf("Failed to send start packet.\n");
+    return STRT_PCKT;
+  }
+
+  int index = 0;
+  int packet_size;
+  unsigned char *d_packet;
+  while(1) {
+    if((d_packet = getDataPacket(data,&index,&packet_size,data_size)) == NULL) {
+      break;
+    }
+
+    if(llwrite(fd,(char *) d_packet, packet_size) < 0) {
+      printf("Failed to send data packet.\n");
+      free(c_packet);
+      free(data);
+      free(d_packet);
+      return DATA_PCKT;
+    }
+
+    free(d_packet);
+  }
   
   //enviar pacote de controlo end
-  
+  c_packet[0] = C_END;
+  if(llwrite(fd,(char *) c_packet,data_size) < 0) {
+    printf("Failed to send end packet.\n");
+    return END_PCKT;
+  }
   //terminar ligacao llclose
+  free(c_packet);
   free(data);
+  free(d_packet);
   llclose(fd,TRANSMITTER);
   return 0;
 }

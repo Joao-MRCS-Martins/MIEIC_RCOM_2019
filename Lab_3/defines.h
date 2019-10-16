@@ -111,24 +111,9 @@ struct info_frame {
 //LENGTH (TLV) PARAMETER
 #define L1_S 0x04
 
-struct data_packet {                                                                                                  
-  unsigned char C ;                                                                                                 
-  unsigned char N;                                                                                                  
-  unsigned char L2;                                                                                                 
-  unsigned char L1;                                                                                                 
-  char * data;
-};
-
-struct control_packet {
-  unsigned char C;
-  unsigned char T1;
-  unsigned char L1;
-  unsigned char V1[4]; //int -> 4 bytes (chars)
-  unsigned char T2;
-  unsigned char L2;
-  unsigned char V2[MAX_BUFF];
-};
-
-
+// ERROR MASSAGES
+#define STRT_PCKT -6
+#define DATA_PCKT -7
+#define END_PCKT -8
 
 #endif //_DEFINES_H_

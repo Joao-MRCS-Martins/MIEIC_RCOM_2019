@@ -192,7 +192,7 @@ int llwrite(int fd, char *buffer, int length) {
   printf("Message A: %x\n", message.a);
   printf("Message C: %x\n", message.c);
   printf("Message BCC1: %x\n", message.bcc1);
-  printf("Message data: %x%x%x%x%x%x\n", message.data[0],message.data[1],message.data[2],message.data[3],message.data[4],message.data[5]);
+  printf("Message data: %c%c%c%c%c%c\n", message.data[0],message.data[1],message.data[2],message.data[3],message.data[4],message.data[5]);
   printf("Message data size: %d\n", message.data_size);
   printf("Message BCC2: %x%x\n", message.bcc2[0], message.bcc2[1]);
   printf("Message Flag F: %x\n", message.flag_f);
@@ -206,7 +206,7 @@ int llwrite(int fd, char *buffer, int length) {
 
     while (!alrmSet && state != STOP_S) {
       read(fd, &aux, 1);
-      printf("char read: %x\n", aux);
+      //printf("char read: %x\n", aux);
       state_machine(&state, aux, &header);
       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
         break;
