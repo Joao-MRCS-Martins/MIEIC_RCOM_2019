@@ -161,7 +161,7 @@ int llopen(int port, int flag) {
   return fd;
 }
 
-int llwrite(int fd, char *buffer, int length) {
+int llwrite(int fd, unsigned char *buffer, int length) {
 
   struct info_frame message;
   struct header_fields header;
@@ -424,11 +424,11 @@ int main(int argc, char *argv[]) {
 
   if (atoi(argv[2]) == 0) {
 	printf("gvhhj\n");
-    char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE,FLAG};
+    unsigned char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE,FLAG};
     int n = llwrite(fd, mensagem, 4);
   } else {
 	printf("bananas\n");
-    char mensage[255];
+    unsigned char mensage[255];
     int n = llread(fd, mensage);
     printf("n: %d\n", n);
   }

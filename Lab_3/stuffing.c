@@ -44,7 +44,7 @@ unsigned char *data_stuffing(unsigned char *data, int size, int *final_size) {
   return stuffed_data;
 }
 
-unsigned char *data_destuffing(char *data, int size, unsigned *final_size) {
+unsigned char *data_destuffing(unsigned char *data, int size, unsigned *final_size) {
   *final_size = size;
   unsigned char *stuffed_data =
       (unsigned char *)malloc(size * sizeof(unsigned char));

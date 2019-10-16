@@ -5,7 +5,7 @@
 
 // protocol functions
 int llopen(int port, int flag);
-int llwrite(int fd, char *buffer, int length);
+int llwrite(int fd, unsigned char *buffer, int length);
 int llread(int fd, unsigned char *packets);
 int llclose(int fd, int flag);
 
@@ -14,7 +14,7 @@ int send_SET();
 int send_DISC();
 int send_UA();
 unsigned char bcc_calc(unsigned char a, unsigned char c);
-unsigned char *bcc2_calc(char *message, int length);
+unsigned char *bcc2_calc(unsigned char *message, int length);
 void alarmHandler();
 
 #endif
