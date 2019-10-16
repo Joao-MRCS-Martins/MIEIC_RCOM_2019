@@ -108,7 +108,6 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
       if (i % 2 == 0) {
         packets[i - 2] = aux1;
         packets[i-1] = aux2;
-        printf("packets %x %x, i %d\n", packets[i-2], packets[i-1],i);
         aux1 = info;
       } else
       {
@@ -120,11 +119,15 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
       if (aux1 == ESCAPE) {
         bcc_data[0] = aux1;
         bcc_data[1] = aux2;
-      } else {
+      } else if(aux2 != 0) {
         bcc_data[0] = aux2;
         packets[i-1] = aux1;
       }
+	  else {
+bcc_data[0] = aux1;
+     }
 
+		printf("hkgdfkh\n");
       *state = STOP_I;
     }
     break;

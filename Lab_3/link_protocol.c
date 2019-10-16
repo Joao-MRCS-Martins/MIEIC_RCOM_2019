@@ -248,22 +248,21 @@ int llread(int fd, unsigned char *packets) {
       read(fd, &buffer, 1);
       printf("I char read: %x\n", buffer);
       state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer);
-      printf("reading state: %d\n", state_read);
     }
     state = ANALIZE_R;
 
 
-  printf("Message data: %x%x%x%x%x%x\n", packets[0],packets[1],packets[2],packets[3],packets[4],packets[5]);
-  printf("Message data size: %d\n", strlen(packets));
 
     break;
   case ANALIZE_R:
-    bcc2_destuffing(bcc_data);
+printf("hj\n");
+    unsigned char bcc2[2];
+	strcpy(bcc2,bcc2_destuffing(bcc_data));
     unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
     data_destuffing(packets, sizeof(packets), final_size);
   	printf("Message data: %x%x%x%x\n", packets[0],packets[1],packets[2],packets[3]);
 
-    if (bcc_data == bcc2_calc(packets, strlen((const char *)packets))) {
+    if (bcc2 == bcc2_calc(packets, strlen((const char *)packets))) {
       if (flag_answer == C_S0)
         message.c = RR_R0;
       else
