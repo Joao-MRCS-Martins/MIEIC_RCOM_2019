@@ -21,7 +21,7 @@ int n_try = 0;
 int alrmSet = FALSE;
 int n_seq = 0;
 
-unsigned char *bcc2_calc(char *message, int length) {
+unsigned char *bcc2_calc(unsigned char *message, int length) {
   unsigned char *bcc2 = (unsigned char *)malloc(sizeof(unsigned char));
   *bcc2 = message[0];
   for (int i = 1; i < length; i++) {
@@ -48,7 +48,6 @@ int send_message() { return write(fd, &message, sizeof(struct control_frame)); }
 unsigned char bcc_calc(unsigned char a, unsigned char c) { return a ^ c; }
 
 int llopen(int port, int flag) {
-
   char port_path[MAX_BUFF];
   struct termios newtio;
   struct header_fields header;
@@ -163,45 +162,46 @@ int llopen(int port, int flag) {
 
 int llwrite(int fd, unsigned char *buffer, int length) {
 
-  struct info_frame message;
+  struct info_frame m;
   struct header_fields header;
   unsigned char aux;
   int state = 0;
 
-  message.flag_i = message.flag_f = FLAG;
-  message.a = A_SENDER;
+  m.flag_i = m.flag_f = FLAG;
+  m.a = A_SENDER;
   if (n_seq == 0) // check sequence number
     message.c = C_S0;
   else
-    message.c = C_S1;
-  message.bcc1 = message.a ^ message.c;
+    m.c = C_S1;
+  m.bcc1 = m.a ^ m.c;
 
   // bcc2 generation & stuffing
   unsigned char *bcc2 = bcc2_calc(buffer, length);
   unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2);
-  message.bcc2 = bcc2_stuffed;
+  strcpy(m.bcc2, bcc2_stuffed);
 
 	int datasize = 0;
   // byte stuffing on file data
 
-  message.data = data_stuffing(buffer, length,&datasize);
+  strcpy(m.data, data_stuffing(buffer, length,&datasize));
 
   // prepare reply processing
   header.A_EXCT = A_SENDER;
   header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
   n_try = 0;
 
-  printf("Message Flag I: %x\n", message.flag_i);
-  printf("Message A: %x\n", message.a);
-  printf("Message C: %x\n", message.c);
-  printf("Message BCC1: %x\n", message.bcc1);
-  printf("Message data: %x%x%x%x%x%x\n", message.data[0],message.data[1],message.data[2],message.data[3],message.data[4],message.data[5]);
-  printf("Message BCC2: %x%x\n", message.bcc2[0], message.bcc2[1]);
-  printf("Message Flag F: %x\n", message.flag_f);
+  printf("Message Flag I: %x\n", m.flag_i);
+  printf("Message A: %x\n", m.a);
+  printf("Message C: %x\n", m.c);
+  printf("Message BCC1: %x\n", m.bcc1);
+  printf("Message data: %x%x%x%x%x%x\n", m.data[0],m.data[1],m.data[2],m.data[3],m.data[4],m.data[5]);
+  printf("Message BCC2: %x%x\n", m.bcc2[0], m.bcc2[1]);
+  printf("Message Flag F: %x\n", m.flag_f);
 
   do {
 
-    int r = write(fd, &message, sizeof(struct info_frame));
+    int r = write(fd, &m, sizeof(m));
+  printf("Message data: %x%x%x%x%x%x\n", m.data[0],m.data[1],m.data[2],m.data[3],m.data[4],m.data[5]);
     printf("Sent message %d.\n",r);
     alrmSet = FALSE;
     alarm(TIMEOUT);
@@ -237,7 +237,7 @@ int llread(int fd, unsigned char *packets) {
   int state_read = 0;
   int flag_answer = 0;
 
-  unsigned char *bcc_data = (unsigned char *)malloc(sizeof(unsigned char *));
+  unsigned char bcc_data[2];
 
   struct control_frame message;
 
@@ -280,8 +280,7 @@ int llread(int fd, unsigned char *packets) {
 
     message.flag_i = message.flag_f = FLAG;
     message.a = A_SENDER;
-    message.bcc = bcc_calc(message.a, message.c);
-
+    strcpy(message.bcc, bcc_calc(message.a, message.c));
     state = WRITE_R;
     break;
   case WRITE_R:
@@ -302,7 +301,6 @@ int llread(int fd, unsigned char *packets) {
         REJ1 = 0;
         // timeout (sai)
       }
-
     }
     else
       state = END_R;
@@ -420,14 +418,16 @@ int main(int argc, char *argv[]) {
     return -5;
   }
 
+
+
   int fd = llopen(atoi(argv[1]), atoi(argv[2]));
 
+
+
   if (atoi(argv[2]) == 0) {
-	printf("gvhhj\n");
     unsigned char mensagem[] = {FLAG, 0x43, 0x12, ESCAPE,FLAG};
     int n = llwrite(fd, mensagem, 4);
   } else {
-	printf("bananas\n");
     unsigned char mensage[255];
     int n = llread(fd, mensage);
     printf("n: %d\n", n);

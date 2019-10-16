@@ -85,8 +85,8 @@ struct info_frame {
   unsigned char a;
   unsigned char c;
   unsigned char bcc1;
-  unsigned char *data;
-  unsigned char *bcc2;
+  unsigned char data[256];
+  unsigned char bcc2[2];
   unsigned char flag_f;
 };
 
