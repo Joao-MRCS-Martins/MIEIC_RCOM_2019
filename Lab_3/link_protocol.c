@@ -174,20 +174,21 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     m.c = C_S1;
   m.bcc1 = m.a ^ m.c;
 
-printf("bvaba\n");
   // bcc2 generation & stuffing
   unsigned char bcc2;
   bcc2_calc(buffer, length, &bcc2);
-printf("f\n");
   unsigned char bcc2_stuffed[2];
   bcc2_stuffing(bcc2, &bcc2_stuffed);
-printf("f\n");
   strcpy(m.bcc2, bcc2_stuffed);
 
 	int datasize = 0;
   // byte stuffing on file data
+unsigned char data[256];
+data_stuffing(buffer, length,&datasize,&data);
+printf("size %d\n", datasize);
+  strncpy(m.data, data,datasize);
+printf("size2 %d\n", sizeof(m.data));
 
-  strcpy(m.data, data_stuffing(buffer, length,&datasize));
 
   // prepare reply processing
   header.A_EXCT = A_SENDER;
@@ -203,7 +204,7 @@ printf("f\n");
   printf("Message Flag F: %x\n", m.flag_f);
 
   do {
-
+printf("data size %d\n", sizeof(m.data));
     int r = write(fd, &m, sizeof(m));
   printf("Message data: %x%x%x%x%x%x\n", m.data[0],m.data[1],m.data[2],m.data[3],m.data[4],m.data[5]);
     printf("Sent message %d.\n",r);
@@ -263,7 +264,7 @@ printf("hj\n");
     unsigned char bcc2[2];
 	strcpy(bcc2,bcc2_destuffing(bcc_data));
     unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
-    data_destuffing(packets, sizeof(packets), final_size);
+    //data_destuffing(packets, sizeof(packets), final_size);
   	printf("Message data: %x%x%x%x\n", packets[0],packets[1],packets[2],packets[3]);
 unsigned char bcc2_calcu[2];
 bcc2_calc(packets, strlen((const char *)packets),&bcc2_calcu);

@@ -10,59 +10,60 @@ void bcc2_stuffing(unsigned char bcc2, unsigned char *bcc2_stuffed){
     bcc2_stuffed[0] = ESCAPE;
     bcc2_stuffed[1] = ESC_ESC;
   } else {
-printf("asasas\n");
     bcc2_stuffed[0] = bcc2;
   }
 }
 
-unsigned char *data_stuffing(unsigned char *data, int size, int *final_size) {
-  *final_size = size;
-  unsigned char *stuffed_data = (unsigned char *)malloc(size * sizeof(unsigned char));
+void data_stuffing(unsigned char *data, int size, int *final_size, unsigned char * stuffed_data) {
+  *final_size = 0;
 
   int j = 0; // current position on stuffed array
   for (int i = 0; i < size; i++) {
     if (data[i] == FLAG) {
-      stuffed_data = (unsigned char *)realloc(stuffed_data, ++(*final_size));
       stuffed_data[j] = ESCAPE;
       stuffed_data[j + 1] = FLAG_ESC;
       j += 2;
+	*final_size = *final_size +2;
     } else if (data[i] == ESCAPE) {
-      stuffed_data = (unsigned char *)realloc(stuffed_data, ++(*final_size));
       stuffed_data[j] = ESCAPE;
       stuffed_data[j + 1] = ESC_ESC;
       j += 2;
+*final_size = *final_size +2;
     } else {
       stuffed_data[j] = data[i];
       j++;
+*final_size = *final_size +1;
     }
   }
 
-  return stuffed_data;
+stuffed_data[j] = '\0';
+*final_size = *final_size +1;
+
 }
 
-unsigned char *data_destuffing(unsigned char *data, int size, unsigned *final_size) {
+void data_destuffing(unsigned char *data, int size, unsigned *final_size, unsigned char *stuffed_data) {
   *final_size = size;
-  unsigned char *stuffed_data =
-      (unsigned char *)malloc(size * sizeof(unsigned char));
+
 
   int j = 0;
   for (int i = 0; i < size;) {
     if (data[i] == ESCAPE) {
-      stuffed_data = (unsigned char *)realloc(stuffed_data, --(*final_size));
       if (data[i + 1] == FLAG_ESC)
         stuffed_data[j] = FLAG;
       else
         stuffed_data[j] = ESCAPE;
       i += 2;
+	*final_size = *final_size -1;
     } else {
       stuffed_data[j] = data[i];
       i++;
+
     }
 
     j++;
   }
 
-  return stuffed_data;
+
 }
 
 unsigned char *bcc2_destuffing(unsigned char *bcc2) {
