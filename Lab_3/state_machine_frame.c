@@ -114,28 +114,22 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
       }
       i++;
     } else {
-      if(i %2 ==0)
-      {
-        if(aux1 == ESCAPE)
-        {
+      if (i % 2 == 0) {
+        if (aux1 == ESCAPE) {
           bcc_data[0] = aux1;
           bcc_data[1] = aux2;
-        }
-        else
-        packets[i] = aux1;
-        bcc_data[0] = aux2;   
-      }
-      else{
-        if(aux2 == ESCAPE)
-        {
+        } else
+          packets[i] = aux1;
+        bcc_data[0] = aux2;
+      } else {
+        if (aux2 == ESCAPE) {
           bcc_data[0] = aux2;
           bcc_data[1] = aux1;
-        }
-        else
-        packets[i] = aux2;
-        bcc_data[0] = aux1;   
+        } else
+          packets[i] = aux2;
+        bcc_data[0] = aux1;
       }
-      *datasize = i-2;
+      *datasize = i - 2;
       *state = STOP_I;
     }
     break;
