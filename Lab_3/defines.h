@@ -22,6 +22,8 @@
 #define C_UA 0x07
 #define C_S0 0x00
 #define C_S1 0x40
+#define C_I0 0x00
+#define C_I1 0x40
 #define RR_R0 0x05
 #define RR_R1 0x85
 #define REJ_R0 0x01

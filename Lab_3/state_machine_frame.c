@@ -59,7 +59,7 @@ void state_machine(int *state, unsigned char info,
 }
 
 void state_machine_I(int *state, unsigned char info, unsigned char *packets,
-                     unsigned char *bcc_data, int C) {
+                     unsigned char *bcc_data, int C, int *datasize) {
 
   switch (*state) {
   case START_S:
@@ -97,7 +97,7 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
       *state = START_S;
     break;
   case BCC_RCV:
-    if (info != FLAG && info !=0) {
+    if (info != FLAG && info != 0) {
       aux1 = info;
       i++;
       *state = INFO;
@@ -107,27 +107,29 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
     if (info != FLAG) {
       if (i % 2 == 0) {
         packets[i - 2] = aux1;
-        packets[i-1] = aux2;
+        packets[i - 1] = aux2;
         aux1 = info;
-      } else
-      {
+      } else {
         aux2 = info;
       }
       i++;
     } else {
-
-      if (aux1 == ESCAPE) {
-        bcc_data[0] = aux1;
-        bcc_data[1] = aux2;
-      } else if(aux2 != 0) {
+      if (i % 2 == 0) {
+        if (aux1 == ESCAPE) {
+          bcc_data[0] = aux1;
+          bcc_data[1] = aux2;
+        } else
+          packets[i] = aux1;
         bcc_data[0] = aux2;
-        packets[i-1] = aux1;
+      } else {
+        if (aux2 == ESCAPE) {
+          bcc_data[0] = aux2;
+          bcc_data[1] = aux1;
+        } else
+          packets[i] = aux2;
+        bcc_data[0] = aux1;
       }
-	  else {
-bcc_data[0] = aux1;
-     }
-
-		printf("hkgdfkh\n");
+      *datasize = i - 2;
       *state = STOP_I;
     }
     break;
