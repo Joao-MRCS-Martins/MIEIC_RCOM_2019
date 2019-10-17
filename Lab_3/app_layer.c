@@ -92,7 +92,7 @@ int senderApp(int port, char * file) {
   }
   
   //send start control packet
-  if(llwrite(fd,(char *) c_packet,data_size) < 0) {
+  if(llwrite(fd, c_packet,data_size) < 0) {
     printf("Failed to send start packet.\n");
     return STRT_PCKT;
   }
@@ -105,7 +105,7 @@ int senderApp(int port, char * file) {
       break;
     }
 
-    if(llwrite(fd,(char *) d_packet, packet_size) < 0) {
+    if(llwrite(fd, d_packet, packet_size) < 0) {
       printf("Failed to send data packet.\n");
       free(c_packet);
       free(data);
@@ -118,7 +118,7 @@ int senderApp(int port, char * file) {
   
   //send end control packet
   c_packet[0] = C_END;
-  if(llwrite(fd,(char *) c_packet,data_size) < 0) {
+  if(llwrite(fd, c_packet,data_size) < 0) {
     printf("Failed to send end packet.\n");
     return END_PCKT;
   }
@@ -135,8 +135,8 @@ int senderApp(int port, char * file) {
   return 0;
 }
 
-char *getStartInfo(int fd, char *filename, int *file_size) {
-  char *c_packet = (char *) malloc((MAX_BUFF + 9) * sizeof(char));
+unsigned char *getStartInfo(int fd, char *filename, int *file_size) {
+  unsigned char *c_packet = (unsigned char *) malloc((MAX_BUFF + 9) * sizeof(unsigned char));
   
   if(llread(fd,c_packet) <0) {
     return NULL;
@@ -173,7 +173,7 @@ char *getStartInfo(int fd, char *filename, int *file_size) {
 }
 
 int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
-  char d_packet[MAX_PCKT_SIZE + 4];
+  unsigned char d_packet[MAX_PCKT_SIZE + 4];
 
   if(llread(port_fd,d_packet) <0) {
     printf("Failed to read data packet.\n");
@@ -201,8 +201,8 @@ int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
   return 0;
 }
 
-int checkEndInfo(int fd, char *c_packet) {
-  char e_packet[MAX_BUFF + 9];
+int checkEndInfo(int fd, unsigned char *c_packet) {
+  unsigned char e_packet[MAX_BUFF + 9];
   if(llread(fd,e_packet) <0) {
     return END_PCKT;
   }
@@ -223,7 +223,7 @@ int checkEndInfo(int fd, char *c_packet) {
 int receiverApp(int port) {
   //open connection (llopen)
   int fd;
-  if((fd = llopen(port,TRANSMITTER)) < 0) {
+  if((fd = llopen(port,RECEIVER)) < 0) {
     printf("Failed to open connection with receiver.\n");
     return CONNECT_FAIL;
   }
@@ -231,7 +231,7 @@ int receiverApp(int port) {
   //get control packet info to start
   char filename[MAX_BUFF];
   int file_size;
-  char *c_packet;
+  unsigned char *c_packet;
   if((c_packet = getStartInfo(fd,filename,&file_size)) == NULL) {
     close(fd);
     return STRT_PCKT;
@@ -274,28 +274,30 @@ int receiverApp(int port) {
   return 0;
 }
 
-int main(int argc, char *argv[]) {
+// int main(int argc, char *argv[]) {
 
-  if(argc != 4) {
-    printf("Wrong number of arguments. Usage: ./link <TRANSMITTER|RECEIVER>[0|1] <SERIAL PORT>[0|1|2] <file>\n");
-    return INVALID_ARGS;
-  }
+//   if(argc != 4 && argc != 3) {
+//     printf("Wrong number of arguments. Usage: ./link <TRANSMITTER|RECEIVER>[0|1] <SERIAL PORT>[0|1|2] <file>\n");
+//     return INVALID_ARGS;
+//   }
 
-  int port = atoi(argv[2]);
-  if(port < 0 || port > 2) {
-    printf("Wrong Port. Use ports 0, 1 or 2.\n");
-    return INVALID_PORT;
-  }
+//   int port = atoi(argv[2]);
+//   printf("port: %d\n",port);
+//   if(port < 0 || port > 2) {
+//     printf("Wrong Port. Use ports 0, 1 or 2.\n");
+//     return INVALID_PORT;
+//   }
 
-  int actor = atoi(argv[1]);
-  if(actor == TRANSMITTER) {
-    return senderApp(port,argv[3]);
-  }
-  else if(actor == RECEIVER) {
-    return receiverApp(port);
-  }
-  else {
-    printf("Invalid actor.\n");
-    return INVALID_ACTOR;
-  }
-}
+//   int actor = atoi(argv[1]);
+//   printf("actor: %d\n",actor);
+//   if(actor == TRANSMITTER) {
+//     return senderApp(port,argv[3]);
+//   }
+//   else if(actor == RECEIVER) {
+//     return receiverApp(port);
+//   }
+//   else {
+//     printf("Invalid actor.\n");
+//     return INVALID_ACTOR;
+//   }
+// }
