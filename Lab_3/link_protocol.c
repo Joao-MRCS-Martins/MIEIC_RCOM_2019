@@ -32,8 +32,9 @@ unsigned char *bcc2_calc(unsigned char *message, int length) {
 }
 
 void alarmHandler() {
+  printf("\n\n entered alarm \n\n");
   alrmSet = TRUE;
-  n_try++;
+  //n_try++;
   printf("Alarm nº%d\n", n_try);
 }
 
@@ -69,12 +70,12 @@ int llopen(int port, int flag) {
   fd = open(port_path, O_RDWR | O_NOCTTY);
   if (fd < 0) {
     perror(port_path);
-    return -1;
+    exit(-1);
   }
 
   if (tcgetattr(fd, &oldtio) == -1) { /* save current port settings */
     perror("tcgetattr");
-    return -1;
+    exit(-1);
   }
 
   bzero(&newtio, sizeof(newtio));
@@ -92,7 +93,7 @@ int llopen(int port, int flag) {
 
   if (tcsetattr(fd, TCSANOW, &newtio) == -1) {
     perror("tcsetattr");
-    return -1;
+    exit(-1);
   }
 
   printf("Serial port set up.\n");
@@ -186,24 +187,18 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   header.A_EXCT = A_SENDER;
   header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
   n_try = 0;
-
-  printf("Message Flag I: %x\n", message.flag_i);
-  printf("Message A: %x\n", message.a);
-  printf("Message C: %x\n", message.c);
-  printf("Message BCC1: %x\n", message.bcc1);
-  printf("Message data: %c%c%c%c%c%c\n", message.data[0],message.data[1],message.data[2],message.data[3],message.data[4],message.data[5]);
-  printf("Message data size: %d\n", message.data_size);
-  printf("Message BCC2: %x%x\n", message.bcc2[0], message.bcc2[1]);
-  printf("Message Flag F: %x\n", message.flag_f);
-
+  
+  
   do {
     write(fd, &frame, datasize + bccsize + 5);
+    n_try++;
+
+    printf("I've written data");
     alrmSet = FALSE;
     alarm(TIMEOUT);
 
-    while (!alrmSet && state != STOP_S) {
+    while (alrmSet != TRUE || state != STOP_S) {
       read(fd, &aux, 1);
-      //printf("char read: %x\n", aux);
       state_machine(&state, aux, &header);
       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
         break;
@@ -245,42 +240,41 @@ int llread(int fd, unsigned char *packets) {
           alarm(TIMEOUT_R);
           read(fd, &buffer, 1);
           printf("read char %x\n", buffer);
-          state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer,
-                          &datasize);
+          state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer, &datasize);
         }
         state = ANALIZE_R;
 
         break;
       case ANALIZE_R:
-        printf("\n");
-        unsigned char *bcc2 = bcc2_destuffing(bcc_data);
-        int final_size;
-        unsigned char *dest_data =
-            data_destuffing(packets, datasize, &final_size);
-        unsigned char *packets_bcc = bcc2_calc(dest_data, final_size);
+        {
+          unsigned char *bcc2 = bcc2_destuffing(bcc_data);
+          int final_size;
+          unsigned char *dest_data =
+              data_destuffing(packets, datasize, &final_size);
+          unsigned char *packets_bcc = bcc2_calc(dest_data, final_size);
 
-        if (*bcc2 == *packets_bcc) {
-          if (flag_answer == C_S0) {
-            frame[2] = RR_R0;
-          } else
-            frame[2] = RR_R1;
-        }
-        else {
-          if (flag_answer == C_S0)
-            frame[2] = REJ_R0;
-          else
-           frame[2] = REJ_R1;
-        }
+          if (*bcc2 == *packets_bcc) {
+            if (flag_answer == C_S0) {
+              frame[2] = RR_R0;
+            } else
+              frame[2] = RR_R1;
+          }
+          else {
+            if (flag_answer == C_S0)
+              frame[2] = REJ_R0;
+            else
+            frame[2] = REJ_R1;
+          }
 
-        frame[0] = FLAG;
-        frame[1] = A_SENDER;
-        frame[3] = bcc_calc(frame[1], frame[2]);
-        frame[4] = FLAG;
-        state = WRITE_R;
-      break;
+          frame[0] = FLAG;
+          frame[1] = A_SENDER;
+          frame[3] = bcc_calc(frame[1], frame[2]);
+          frame[4] = FLAG;
+          state = WRITE_R;
+          break;
+        }
+        
     case WRITE_R:
-      printf("meias\n");
-      printf("c in llread %x", frame[2]);
       write(fd, &frame, 5);
       if (frame[2] == REJ_R0) {
         if (REJ0 < MAX_REJ) {
@@ -302,66 +296,6 @@ int llread(int fd, unsigned char *packets) {
         state = END_R;
     case END_R:
         break;
-  switch (state) {
-  case READ_R:
-    while (state_read != STOP_I) {
-      alarm(TIMEOUT_R);
-      read(fd, &buffer, 1);
-      printf("I char read: %x\n", buffer);
-      state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer);
-      printf("reading state: %d\n", state_read);
-    }
-    state = ANALIZE_R;
-    printf("Received message: %s\n", packets);
-
-
-  printf("Message data: %x%x%x%x%x%x\n", packets[0],packets[1],packets[2],packets[3],packets[4],packets[5]);
-  printf("Message data size: %ld\n", strlen(packets));
-
-    break;
-  case ANALIZE_R:
-    bcc2_destuffing(bcc_data);
-    unsigned *final_size = (unsigned *)malloc(sizeof(unsigned *));
-    data_destuffing(packets, sizeof(packets), final_size);
-  	printf("Message data: %x%x%x%x\n", packets[0],packets[1],packets[2],packets[3]);
-
-    if (bcc_data == bcc2_calc(packets, strlen((const char *)packets))) {
-      if (flag_answer == C_S0)
-        message.c = RR_R0;
-      else
-        message.c = RR_R1;
-
-    } else {
-      if (flag_answer == C_S0)
-        message.c = REJ_R0;
-      else
-        message.c = REJ_R1;
-    }
-
-    message.flag_i = message.flag_f = FLAG;
-    message.a = A_SENDER;
-    message.bcc = bcc_calc(message.a, message.c);
-
-    state = WRITE_R;
-    break;
-  case WRITE_R:
-    write(fd, &message, sizeof(struct control_frame));
-    if (message.c == REJ_R0) {
-      if (REJ0 < MAX_REJ) {
-        REJ0++;
-        state = READ_R;
-      } else {
-        REJ0 = 0;
-        // timeout (sai)
-      }
-    } else if (message.c == REJ_R1) {
-      if (REJ1 < MAX_REJ) {
-        REJ1++;
-        state = READ_R;
-      } else {
-        REJ1 = 0;
-        // timeout (sai)
-      }
     }
   }
   return strlen(packets);
@@ -387,8 +321,11 @@ int llclose(int fd, int flag) {
 
     printf("Sending DISC to RECEIVER.\n");
 
+    n_try = 0;
     do {
       write(fd, &frame, 5);
+      n_try++;
+
       printf("DISC sent.\n");
       alarm(TIMEOUT);
       alrmSet = FALSE;
@@ -479,7 +416,8 @@ int main(int argc, char *argv[]) {
   int fd = llopen(atoi(argv[1]), atoi(argv[2]));
 
   if (atoi(argv[2]) == 0) {
-    unsigned char mensagem[] = {0x34, 0x43, FLAG, ESCAPE, 0X48};
+    //unsigned char mensagem[] = {0x34, 0x43, FLAG, ESCAPE, 0X48};
+    unsigned char mensagem[4] = "abba";
     llwrite(fd, mensagem, 4);
   } else {
     unsigned char mensage[255];
@@ -487,6 +425,7 @@ int main(int argc, char *argv[]) {
     printf("n: %d\n", n);
   }
   return llclose(fd, atoi(argv[2]));
+}
 
   // char cenas[5] = {0x45, 0x7D, 0x5D, 0x67, 0x34};
   // int final;
@@ -511,4 +450,3 @@ int main(int argc, char *argv[]) {
   // free(bcc2);
   // free(stuffed);
   // free(data_stuffed);
-}
