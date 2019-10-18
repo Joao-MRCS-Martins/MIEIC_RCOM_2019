@@ -1,7 +1,6 @@
 #ifndef _DEFINES_H_
 #define _DEFINES_H_
 
-///////////////// LINK LAYER /////////////////////////////
 // HARDWARE
 #define BAUDRATE B9600
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
@@ -58,6 +57,7 @@
 #define MAX_RETRIES 3
 #define TIMEOUT 3
 #define TIMEOUT_R 10
+
 #define MAX_REJ 3
 
 // SERIAL PORTS
@@ -75,24 +75,6 @@
 #define INVALID_ACTOR -3
 #define INVALID_ARGS -4
 #define TIMEOUT_ERROR -5
-
-struct control_frame {
-  unsigned char flag_i;
-  unsigned char a;
-  unsigned char c;
-  unsigned char bcc;
-  unsigned char flag_f;
-};
-
-struct info_frame {
-  unsigned char flag_i;
-  unsigned char a;
-  unsigned char c;
-  unsigned char bcc1;
-  unsigned char data[20];
-  unsigned char bcc2[2];
-  unsigned char flag_f;
-};
 
 /////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////
@@ -120,5 +102,23 @@ struct info_frame {
 #define END_PCKT -8
 #define CONNECT_FAIL -9
 #define FILE_ERROR -10
+
+struct control_frame {
+  unsigned char flag_i;
+  unsigned char a;
+  unsigned char c;
+  unsigned char bcc;
+  unsigned char flag_f;
+};
+
+struct info_frame {
+  unsigned char flag_i;
+  unsigned char a;
+  unsigned char c;
+  unsigned char bcc1;
+  unsigned char data[20];
+  unsigned char bcc2[2];
+  unsigned char flag_f;
+};
 
 #endif //_DEFINES_H_

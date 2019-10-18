@@ -48,33 +48,29 @@ unsigned char *data_stuffing(unsigned char *data, int size, int *final_size) {
   return stuffed_data;
 }
 
-unsigned char *data_destuffing(unsigned char *data, int size,
-                               int *final_size) {
+unsigned char *data_destuffing(unsigned char *data, int size, int *final_size) {
   *final_size = size;
-  unsigned char *stuffed_data =
-      (unsigned char *)malloc(size * sizeof(unsigned char));
+  unsigned char *stuffed_data = (unsigned char *)malloc(size * sizeof(unsigned char));
 
   int sizeless = 0;
   int j = 0;
-
   for (int i = 0; i < size;) {
     if (data[i] == ESCAPE && data[i + 1] == FLAG_ESC) {
       stuffed_data[j] = FLAG;
       i += 2;
-      sizeless--;
+      sizeless++;
     } else if (data[i] == ESCAPE && data[i + 1] == ESC_ESC) {
       stuffed_data[j] = ESCAPE;
       i += 2;
-      sizeless--;
+      sizeless++;
     } else {
       stuffed_data[j] = data[i];
       i++;
     }
     j++;
   }
-  stuffed_data =
-      (unsigned char *)realloc(stuffed_data, (*final_size) - sizeless);
-
+  stuffed_data = (unsigned char *)realloc(stuffed_data, (*final_size) - sizeless);
+  *final_size -= sizeless;
   return stuffed_data;
 }
 

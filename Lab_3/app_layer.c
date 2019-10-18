@@ -14,7 +14,7 @@ unsigned char N_SEQ = 0;
 char *getFileData(char *filename, int *file_size) {
   FILE *f;
   struct stat meta;
-  
+
   if((f = fopen(filename,"r")) == NULL) {
     perror(filename);
     return NULL;
@@ -80,23 +80,23 @@ unsigned char *makeDataPacket(char* data, int *index, int *packet_size, int data
 int senderApp(int port, char * file) {  
   int data_size;
   char * data = getFileData(file, &data_size);
-  
+
   unsigned char * c_packet = makeControlPacket(file,data_size);
   printf("c_packet: %s\n", &c_packet[9]);
-  
+
   //open connection (llopen)
   int fd;
   if((fd = llopen(port,TRANSMITTER)) < 0) {
     printf("Failed to open connection with receiver.\n");
     return CONNECT_FAIL;
   }
-  
+
   //send start control packet
   if(llwrite(fd, c_packet,data_size) < 0) {
     printf("Failed to send start packet.\n");
     return STRT_PCKT;
   }
-  
+
   int index = 0;
   int packet_size;
   unsigned char *d_packet;
@@ -115,14 +115,14 @@ int senderApp(int port, char * file) {
 
     free(d_packet);
   }
-  
+
   //send end control packet
   c_packet[0] = C_END;
   if(llwrite(fd, c_packet,data_size) < 0) {
     printf("Failed to send end packet.\n");
     return END_PCKT;
   }
-  
+
   //close connection (llclose)
   free(c_packet);
   free(data);
@@ -137,7 +137,7 @@ int senderApp(int port, char * file) {
 
 unsigned char *getStartInfo(int fd, char *filename, int *file_size) {
   unsigned char *c_packet = (unsigned char *) malloc((MAX_BUFF + 9) * sizeof(unsigned char));
-  
+
   if(llread(fd,c_packet) <0) {
     return NULL;
   }
@@ -195,7 +195,7 @@ int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
     printf("Failed to write data into destination file.\n");
     return DATA_PCKT;
   }
-  
+
   *total_read += k;
   N_SEQ = (N_SEQ + 1) % 255;
   return 0;
@@ -300,4 +300,4 @@ int receiverApp(int port) {
 //     printf("Invalid actor.\n");
 //     return INVALID_ACTOR;
 //   }
-// }
+// } 

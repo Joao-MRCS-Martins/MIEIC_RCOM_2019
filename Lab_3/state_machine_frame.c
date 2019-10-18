@@ -58,8 +58,7 @@ void state_machine(int *state, unsigned char info,
   }
 }
 
-void state_machine_I(int *state, unsigned char info, unsigned char *packets,
-                     unsigned char *bcc_data, int C, int *datasize) {
+void state_machine_I(int *state, unsigned char info, unsigned char *packets, unsigned char *bcc_data, int C, int *datasize) {
 
   switch (*state) {
   case START_S:
@@ -118,18 +117,23 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
         if (aux1 == ESCAPE) {
           bcc_data[0] = aux1;
           bcc_data[1] = aux2;
-        } else
+          *datasize = i - 2;
+        } else{
           packets[i] = aux1;
+          *datasize = i - 1;
+        }
         bcc_data[0] = aux2;
       } else {
         if (aux2 == ESCAPE) {
           bcc_data[0] = aux2;
           bcc_data[1] = aux1;
-        } else
+          *datasize = i - 2;
+        } else{
           packets[i] = aux2;
+          *datasize = i - 1;
+        }
         bcc_data[0] = aux1;
       }
-      *datasize = i - 2;
       *state = STOP_I;
     }
     break;
