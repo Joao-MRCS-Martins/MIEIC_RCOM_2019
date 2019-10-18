@@ -56,10 +56,6 @@ int llopen(int port, int flag) {
 
   signal(SIGALRM, alarmHandler);
 
-  /*if (port < 0 || port > 2) {
-    return INVALID_PORT;
-  }*/
-
   if (flag != TRANSMITTER && flag != RECEIVER) {
     return INVALID_ACTOR;
   }
@@ -70,12 +66,12 @@ int llopen(int port, int flag) {
   fd = open(port_path, O_RDWR | O_NOCTTY);
   if (fd < 0) {
     perror(port_path);
-    exit(-1);
+    return SETUP_ERROR;
   }
 
   if (tcgetattr(fd, &oldtio) == -1) { /* save current port settings */
     perror("tcgetattr");
-    exit(-1);
+    return SETUP_ERROR;
   }
 
   bzero(&newtio, sizeof(newtio));
@@ -83,17 +79,16 @@ int llopen(int port, int flag) {
   newtio.c_iflag = IGNPAR;
   newtio.c_oflag = 0;
 
-  /* set input mode (non-canonical, no echo,...) */
   newtio.c_lflag = 0;
 
-  newtio.c_cc[VTIME] = 0; /* inter-character timer unused */
-  newtio.c_cc[VMIN] = 1;  /* blocking read until 5 chars received */
+  newtio.c_cc[VTIME] = 0; 
+  newtio.c_cc[VMIN] = 1;  
 
   tcflush(fd, TCIOFLUSH);
 
   if (tcsetattr(fd, TCSANOW, &newtio) == -1) {
     perror("tcsetattr");
-    exit(-1);
+    return SETUP_ERROR;
   }
 
   printf("Serial port set up.\n");
@@ -193,7 +188,6 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     write(fd, &frame, datasize + bccsize + 5);
     n_try++;
 
-    printf("I've written data\n");
     alrmSet = FALSE;
     alarm(TIMEOUT);
     while (alrmSet != TRUE && state != STOP_S) {
@@ -333,9 +327,8 @@ int llclose(int fd, int flag) {
       while (!alrmSet && state != STOP_S) {
         alarm(TIMEOUT);
         read(fd, &buffer, 1);
-        // printf("Char read: %x\n", buffer);
+        
         state_machine(&state, buffer, &fields);
-        // printf("State: %d\n", state);
       }
 
       if (state == STOP_S)
@@ -402,7 +395,7 @@ int llclose(int fd, int flag) {
   sleep(1);
   if (tcsetattr(fd, TCSANOW, &oldtio) == -1) {
     perror("tcsetattr");
-    exit(-1);
+    return SETUP_ERROR;
   }
   close(fd);
   return 0;
