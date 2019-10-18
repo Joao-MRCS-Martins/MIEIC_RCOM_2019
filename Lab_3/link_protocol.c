@@ -19,6 +19,7 @@ int fd;
 int n_try = 0;
 int alrmSet = FALSE;
 int n_seq = 0;
+unsigned char frame[256];
 
 unsigned char *bcc2_calc(unsigned char *message, int length) {
   unsigned char *bcc2 = (unsigned char *)malloc(sizeof(unsigned char));
@@ -32,22 +33,27 @@ unsigned char *bcc2_calc(unsigned char *message, int length) {
 }
 
 void alarmHandler() {
-  printf("\n\n entered alarm \n\n");
   alrmSet = TRUE;
-  //n_try++;
+  n_try++;
+  if(n_try == MAX_RETRIES) {
+    printf("Timeout. Exiting ...\n");
+    exit(TIMEOUT_ERROR);  
+  }else {
+    write(fd,&frame,5);
+    alarm(TIMEOUT);
+  }
   printf("Alarm nº%d\n", n_try);
 }
 
 void alarmHandlerR() {
   printf("Timeout. exiting ...\n");
-  exit(0);
+  exit(TIMEOUT_ERROR);
 }
 
 unsigned char bcc_calc(unsigned char a, unsigned char c) { return a ^ c; }
 
 int llopen(int port, int flag) {
 
-  unsigned char frame[256];
   char port_path[MAX_BUFF];
   struct termios newtio;
   struct header_fields header;
@@ -107,9 +113,8 @@ int llopen(int port, int flag) {
     do {
       write(fd, &frame, 5);
       alarm(TIMEOUT);
-      alrmSet = FALSE;
       printf("Message sent. Processing UA.\n");
-      while (!alrmSet && state != STOP_S) {
+      while (state != STOP_S) {
         read(fd, &aux, 1);
         state_machine(&state, aux, &header);
       }
@@ -117,7 +122,7 @@ int llopen(int port, int flag) {
       if (state == STOP_S) {
         break;
       }
-    } while (n_try < MAX_RETRIES);
+    } while (1);
 
     if (n_try == MAX_RETRIES)
       return TIMEOUT_ERROR;
@@ -132,9 +137,6 @@ int llopen(int port, int flag) {
 
     printf("Processing SET.\n");
     while (state != STOP_S) {
-      if (alrmSet) {
-        return TIMEOUT_ERROR;
-      }
       read(fd, &aux, 1);
       state_machine(&state, aux, &header);
     }
@@ -211,7 +213,6 @@ int llwrite(int fd, unsigned char *buffer, int length) {
 
 int llread(int fd, unsigned char *packets) {
 
-  unsigned char frame[256];
   // state machine
   int state = 0;
   int REJ1 = 0;
@@ -228,15 +229,12 @@ int llread(int fd, unsigned char *packets) {
   int datasize = 0;
   n_try = 0;
   while (state != END_R && n_try < MAX_RETRIES) {
-    printf("state: %d\n",state);
     switch (state) {
       case READ_R:
         while (state_read != STOP_I) {
           alarm(TIMEOUT_R);
           read(fd, &buffer, 1);
-          printf("read char %x\n", buffer);
           state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer, &datasize);
-          // printf("packets: %s\n",packets);
         }
         state = ANALIZE_R;
 
@@ -408,7 +406,10 @@ int main(int argc, char *argv[]) {
   }
 
   int fd = llopen(atoi(argv[1]), atoi(argv[2]));
-
+  if(fd < 0) {
+    printf("Error opening connection.\n");
+    return TIMEOUT_ERROR;
+  }
   if (atoi(argv[2]) == 0) {
     //unsigned char mensagem[] = {0x34, 0x43, FLAG, ESCAPE, 0X48};
     unsigned char mensagem[] = "asss}vbba";
