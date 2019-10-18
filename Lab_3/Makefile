@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS = -Wall -Wextra -pedantic
+CFLAGS = -Wall -Wextra -pedantic -Wno-pointer-sign
 DEPS = defines.h link_protocol.h state_machine_frame.h stuffing.h
 OBJ = link_protocol.o state_machine_frame.o stuffing.o
 #RECEIVER = 

@@ -193,11 +193,10 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     write(fd, &frame, datasize + bccsize + 5);
     n_try++;
 
-    printf("I've written data");
+    printf("I've written data\n");
     alrmSet = FALSE;
     alarm(TIMEOUT);
-
-    while (alrmSet != TRUE || state != STOP_S) {
+    while (alrmSet != TRUE && state != STOP_S) {
       read(fd, &aux, 1);
       state_machine(&state, aux, &header);
       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
@@ -233,7 +232,9 @@ int llread(int fd, unsigned char *packets) {
 
   signal(SIGALRM, alarmHandlerR);
   int datasize = 0;
-  while (state != END_R) {
+  n_try = 0;
+  while (state != END_R && n_try < MAX_RETRIES) {
+    printf("state: %d\n",state);
     switch (state) {
       case READ_R:
         while (state_read != STOP_I) {
@@ -241,6 +242,7 @@ int llread(int fd, unsigned char *packets) {
           read(fd, &buffer, 1);
           printf("read char %x\n", buffer);
           state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer, &datasize);
+          // printf("packets: %s\n",packets);
         }
         state = ANALIZE_R;
 
@@ -249,8 +251,7 @@ int llread(int fd, unsigned char *packets) {
         {
           unsigned char *bcc2 = bcc2_destuffing(bcc_data);
           int final_size;
-          unsigned char *dest_data =
-              data_destuffing(packets, datasize, &final_size);
+          unsigned char *dest_data = data_destuffing(packets, datasize, &final_size);
           unsigned char *packets_bcc = bcc2_calc(dest_data, final_size);
 
           if (*bcc2 == *packets_bcc) {
@@ -332,9 +333,9 @@ int llclose(int fd, int flag) {
       while (!alrmSet && state != STOP_S) {
         alarm(TIMEOUT);
         read(fd, &buffer, 1);
-        printf("Char read: %x\n", buffer);
+        // printf("Char read: %x\n", buffer);
         state_machine(&state, buffer, &fields);
-        printf("State: %d\n", state);
+        // printf("State: %d\n", state);
       }
 
       if (state == STOP_S)
@@ -417,8 +418,8 @@ int main(int argc, char *argv[]) {
 
   if (atoi(argv[2]) == 0) {
     //unsigned char mensagem[] = {0x34, 0x43, FLAG, ESCAPE, 0X48};
-    unsigned char mensagem[4] = "abba";
-    llwrite(fd, mensagem, 4);
+    unsigned char mensagem[] = "abba";
+    llwrite(fd, mensagem, strlen(mensagem));
   } else {
     unsigned char mensage[255];
     int n = llread(fd, mensage);
