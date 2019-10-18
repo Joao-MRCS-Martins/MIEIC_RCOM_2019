@@ -418,7 +418,7 @@ int main(int argc, char *argv[]) {
 
   if (atoi(argv[2]) == 0) {
     //unsigned char mensagem[] = {0x34, 0x43, FLAG, ESCAPE, 0X48};
-    unsigned char mensagem[] = "abba";
+    unsigned char mensagem[] = "asss}vbba";
     llwrite(fd, mensagem, strlen(mensagem));
   } else {
     unsigned char mensage[255];
@@ -427,27 +427,3 @@ int main(int argc, char *argv[]) {
   }
   return llclose(fd, atoi(argv[2]));
 }
-
-  // char cenas[5] = {0x45, 0x7D, 0x5D, 0x67, 0x34};
-  // int final;
-  // unsigned char *data_destuffed = data_destuffing(cenas, 5, &final);
-  // printf("Stuffed array:\n");
-  // for (int i = 0; i < final; i++) {
-  //   printf("data_stuffed[%d]: %x, %d\n", i, data_destuffed[i], final);
-  // }
-  // unsigned char *bcc2 = (unsigned char*) malloc(sizeof(unsigned char));
-  // *bcc2 = FLAG;
-  // unsigned char * stuffed = bcc2_stuffing(bcc2);
-  // printf("BCC stuffed: %x%x\n",stuffed[0],stuffed[1]);
-
-  // char cenas [5] = {0x45,0x7E,0x12,0x7D,0x7E};
-  // int final;
-  // unsigned char *data_stuffed = data_stuffing(cenas,5,&final);
-  // printf("Stuffed array:\n");
-  // for(int i = 0; i < final; i++) {
-  // 	printf("data_stuffed[%d]: %x\n",i,data_stuffed[i]);
-  // }
-
-  // free(bcc2);
-  // free(stuffed);
-  // free(data_stuffed);
