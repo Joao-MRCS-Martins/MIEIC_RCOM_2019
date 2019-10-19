@@ -152,7 +152,7 @@ int llopen(int port, int flag) {
 }
 
 int llwrite(int fd, unsigned char *buffer, int length) {
-  unsigned char frame[MAX_PCKT_SIZE + 6];
+  unsigned char frame[2*MAX_PCKT_SIZE + 6];
   struct header_fields header;
   unsigned char aux;
   int state = 0;
@@ -169,6 +169,7 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   // byte stuffing on file data
   int datasize = 0;
   unsigned char *data = data_stuffing(buffer, length, &datasize);
+  // printf("datasize: %dlen %d\n",datasize,length);
   memcpy(&frame[4], data, datasize);
   
    // bcc2 generation & stuffing

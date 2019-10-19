@@ -163,7 +163,7 @@ int getStartInfo(int fd, char *filename, int *file_size, unsigned char *c_packet
 }
 
 int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
-  unsigned char d_packet[MAX_PCKT_SIZE + 4] = "";
+  unsigned char d_packet[2*MAX_PCKT_SIZE + 4] = "";
 
   if(llread(port_fd,d_packet) <0) {
     printf("Failed to read data packet.\n");
@@ -238,6 +238,7 @@ int receiverApp(int port) {
   // receive packets and process them into file data
   int rcv_bytes = 0;
   while(rcv_bytes != file_size) {
+    printf("N seq: %d Rcv bytes: %d bytes left: %d\n",N_SEQ,rcv_bytes,file_size-rcv_bytes);
     if(getPacketInfo(fd,dest_fd,&rcv_bytes) < 0) {
       printf("Error receiving package.Terminating.\n"); 
       close(dest_fd);
