@@ -33,8 +33,7 @@ char *getFileData(char *filename, int *file_size) {
   return file_data;
 }
 
-unsigned char *makeControlPacket(char *filename, int size, int *packet_size) {
-  unsigned char * packet = (unsigned char *) malloc((9 + strlen(filename)) * sizeof(unsigned char) + strlen(filename));
+void makeControlPacket(char *filename, int size, int *packet_size, unsigned char * packet) {
   packet[0] = C_START;
   packet[1] = T_SIZE;
   packet[2] = L1_S;
@@ -46,7 +45,6 @@ unsigned char *makeControlPacket(char *filename, int size, int *packet_size) {
   packet[8] = strlen(filename);
   strncpy(&packet[9],filename,strlen(filename)+1);
   *packet_size = 9+ strlen(filename);
-  return packet;
 }
 
 unsigned char *makeDataPacket(char* data, int *index, int *packet_size, int data_size) {
@@ -85,13 +83,13 @@ int senderApp(int port, char * file) {
   }
 
   int c_packet_size;
-  unsigned char * c_packet = makeControlPacket(file,data_size,&c_packet_size);
+  unsigned char c_packet[9+strlen(file)];
+  makeControlPacket(file,data_size,&c_packet_size,c_packet);
 
   //open connection (llopen)
   int fd;
   if((fd = llopen(port,TRANSMITTER)) < 0) {
     printf("Failed to open connection with receiver.\n");
-    free(c_packet);
     return CONNECT_FAIL;
   }
   
@@ -99,7 +97,6 @@ int senderApp(int port, char * file) {
   if(llwrite(fd, c_packet,c_packet_size) < 0) {
     printf("Failed to send start packet.\n");
     close(fd);
-    free(c_packet);
     return STRT_PCKT;
   }
 
@@ -110,15 +107,12 @@ int senderApp(int port, char * file) {
     if((d_packet = makeDataPacket(data,&index,&d_packet_size,data_size)) == NULL) {
       break;
     }
-    printf("d_packet_size: %d\n",d_packet_size);
     if(llwrite(fd, d_packet, d_packet_size) < 0) {
       printf("Failed to send data packet.\n");
-      free(c_packet);
       free(data);
       free(d_packet);
       return DATA_PCKT;
     }
-
     free(d_packet);
   }
 
@@ -130,7 +124,6 @@ int senderApp(int port, char * file) {
   }
 
   //close connection (llclose)
-  free(c_packet);
   free(data);
   if(llclose(fd,TRANSMITTER) < 0) {
     close(fd);
@@ -141,26 +134,24 @@ int senderApp(int port, char * file) {
   return 0;
 }
 
-unsigned char *getStartInfo(int fd, char *filename, int *file_size) {
-  unsigned char *c_packet = (unsigned char *) malloc((MAX_BUFF + 9) * sizeof(unsigned char));
-
+int getStartInfo(int fd, char *filename, int *file_size, unsigned char *c_packet) {
   if(llread(fd,c_packet) <0) {
-    return NULL;
+    return STRT_PCKT;
   }
 
   if(c_packet[0] != C_START) {
     printf("Invalid stage: %d. Expected stage: %d\n",c_packet[0],C_START);
-    return NULL;
+    return STRT_PCKT;
   }
 
   if(c_packet[1] != T_SIZE) {
     printf("Invalid Type: %d. Expected Type: %d\n",c_packet[1],T_SIZE);
-    return NULL;
+    return STRT_PCKT;
   }
 
   if(c_packet[2] != L1_S) {
     printf("Invalid L1 size: %d. Expected size: %d\n",c_packet[2],L1_S);
-    return NULL;
+    return STRT_PCKT;
   }
 
   *file_size = c_packet[3] << 24;
@@ -170,12 +161,11 @@ unsigned char *getStartInfo(int fd, char *filename, int *file_size) {
 
   if(c_packet[7] != T_NAME) {
     printf("Invalid Type: %d. Expected Type: %d\n",c_packet[7],T_NAME);
-    return NULL;
+    return STRT_PCKT;
   }
 
   strncpy(filename,&c_packet[9],c_packet[8]);
-
-  return c_packet;
+  return 0;
 }
 
 int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
@@ -235,10 +225,10 @@ int receiverApp(int port) {
   }
 
   //get control packet info to start
-  char filename[MAX_BUFF];
+  char filename[MAX_BUFF] = "";
   int file_size;
-  unsigned char *c_packet;
-  if((c_packet = getStartInfo(fd,filename,&file_size)) == NULL) {
+  unsigned char c_packet [MAX_BUFF +9];
+  if(getStartInfo(fd,filename,&file_size,c_packet) < 0) {
     close(fd);
     return STRT_PCKT;
   }
@@ -247,7 +237,6 @@ int receiverApp(int port) {
   int dest_fd = open(filename,O_WRONLY|O_CREAT|O_APPEND|O_TRUNC);
   if(dest_fd < 0) {
     printf("Failed to create new file.\n");
-    free(c_packet);
     close(fd);
     return FILE_ERROR;
   }
@@ -257,7 +246,7 @@ int receiverApp(int port) {
   while(rcv_bytes != file_size) {
     if(getPacketInfo(fd,dest_fd,&rcv_bytes) < 0) {
       printf("Error receiving package.Terminating.\n");
-      free(c_packet);
+      
       close(dest_fd);
       close(fd);
       return DATA_PCKT;
@@ -266,10 +255,12 @@ int receiverApp(int port) {
 
   // receive end control packet and validate with start packet
   if(checkEndInfo(fd,c_packet) < 0) {
+    
     close(fd);
     return END_PCKT;
   }
 
+  
   // close connection (llclose)
   if(llclose(fd,RECEIVER) < 0) {
     close(fd);

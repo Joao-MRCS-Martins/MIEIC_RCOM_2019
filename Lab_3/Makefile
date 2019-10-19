@@ -12,7 +12,7 @@ link: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
-	rm -f *.o 
+	rm -f *.o link
 		
 format:
 	clang-format -i *.c *.h -style=llvm

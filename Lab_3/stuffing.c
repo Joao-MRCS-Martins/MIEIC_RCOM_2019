@@ -5,12 +5,12 @@
 unsigned char *bcc2_stuffing(unsigned char *bcc2, int *size) {
   unsigned char *bcc2_stuffed;
   if (*bcc2 == FLAG) {
-    bcc2_stuffed = (unsigned char *)malloc(2 * sizeof(unsigned char *));
+    bcc2_stuffed = (unsigned char *)malloc(2 * sizeof(unsigned char ));
     bcc2_stuffed[0] = ESCAPE;
     bcc2_stuffed[1] = FLAG_ESC;
     *size = 2;
   } else if (*bcc2 == ESCAPE) {
-    bcc2_stuffed = (unsigned char *)malloc(2 * sizeof(unsigned char *));
+    bcc2_stuffed = (unsigned char *)malloc(2 * sizeof(unsigned char ));
     bcc2_stuffed[0] = ESCAPE;
     bcc2_stuffed[1] = ESC_ESC;
     *size = 2;
@@ -74,18 +74,15 @@ unsigned char *data_destuffing(unsigned char *data, int size, int *final_size) {
   return stuffed_data;
 }
 
-unsigned char *bcc2_destuffing(unsigned char *bcc2) {
-  unsigned char *bcc2_stuffed;
-  if (bcc2[0] == ESCAPE) {
+void bcc2_destuffing(unsigned char *bcc2_s,unsigned char *bcc2) {
+  if (bcc2_s[0] == ESCAPE) {
 
-    bcc2_stuffed = (unsigned char *)malloc(sizeof(unsigned char *));
-    if (bcc2[1] == ESC_ESC)
-      bcc2_stuffed[0] = ESCAPE;
+    if (bcc2_s[1] == ESC_ESC)
+      *bcc2 = ESCAPE;
     else
-      bcc2_stuffed[0] = FLAG;
+      *bcc2 = FLAG;
 
   } else {
-    bcc2_stuffed = bcc2;
+    *bcc2 = *bcc2_s;
   }
-  return bcc2_stuffed;
 }

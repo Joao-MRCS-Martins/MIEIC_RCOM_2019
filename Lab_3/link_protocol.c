@@ -201,11 +201,17 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     if (state == STOP_S)
       break;
   } while (n_try < MAX_RETRIES);
-  if (n_try == MAX_RETRIES)
+  
+  if (n_try == MAX_RETRIES) {
+    free(bcc2_stuffed);
+    free(data);
     return TIMEOUT_ERROR;
+  }
 
   n_seq ^= 1;
   printf("Written successfully.\n");
+  free(bcc2_stuffed);
+  free(data);
   return length;
 }
 
@@ -220,7 +226,7 @@ int llread(int fd, unsigned char *packets) {
   int state_read = 0;
   int flag_answer = 0;
 
-  unsigned char *bcc_data = (unsigned char *)malloc(2 * sizeof(unsigned char));
+  unsigned char bcc_data[2];
   
 
   signal(SIGALRM, alarmHandlerR);
@@ -241,12 +247,13 @@ int llread(int fd, unsigned char *packets) {
         break;
       case ANALIZE_R:
         {
-          unsigned char *bcc2 = bcc2_destuffing(bcc_data);
+          unsigned char bcc2;
+          bcc2_destuffing(bcc_data,&bcc2);
           int final_size;
           unsigned char *dest_data = data_destuffing(packets, datasize, &final_size);
           unsigned char *packets_bcc = bcc2_calc(dest_data, final_size);
           
-          if (*bcc2 == *packets_bcc) {
+          if (bcc2 == *packets_bcc) {
             if (flag_answer == C_S0) {
               frame[2] = RR_R0;
             } else
@@ -264,6 +271,8 @@ int llread(int fd, unsigned char *packets) {
           frame[3] = bcc_calc(frame[1], frame[2]);
           frame[4] = FLAG;
           state = WRITE_R;
+          free(dest_data);
+          free(packets_bcc);
           break;
         }
         
