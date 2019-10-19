@@ -188,12 +188,11 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   frame_size = datasize + bccsize + 5;
   do {
     write(fd, &frame, frame_size);
-    printf("sending message\n");
     alrmSet = FALSE;
     alarm(TIMEOUT);
     while (alrmSet != TRUE && state != STOP_S) {
       read(fd, &aux, 1);
-      printf("read: %x\n",aux);
+      // printf("read: %x\n",aux);
       state_machine(&state, aux, &header);
       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1)) {
         break;
@@ -231,14 +230,12 @@ int llread(int fd, unsigned char *packets) {
     // printf("big state: %d\n",state);
     switch (state) {
       case READ_R:
-          do {
+        do {
           alarm(TIMEOUT_R);
           read(fd, &buffer, 1);
+          // printf("read: %x\n",buffer);
           state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer, &datasize);
-          } while (state_read != STOP_I);
-        // for(int i = 0; i < datasize; i++) {
-          // printf("packets[%d]: %x\n",i,packets[i]);
-        // }
+        } while (state_read != STOP_I);
         state = ANALIZE_R;
 
         break;
@@ -248,7 +245,7 @@ int llread(int fd, unsigned char *packets) {
           int final_size;
           unsigned char *dest_data = data_destuffing(packets, datasize, &final_size);
           unsigned char *packets_bcc = bcc2_calc(dest_data, final_size);
-          // printf("bcc2: %x packet_bcc: %x\n",*bcc2,*packets_bcc);
+          
           if (*bcc2 == *packets_bcc) {
             if (flag_answer == C_S0) {
               frame[2] = RR_R0;
@@ -322,7 +319,6 @@ int llclose(int fd, int flag) {
     n_try = 0;
     do {
       write(fd, &frame, 5);
-      n_try++;
 
       printf("DISC sent.\n");
       alarm(TIMEOUT);
@@ -366,7 +362,7 @@ int llclose(int fd, int flag) {
 
     signal(SIGALRM, alarmHandlerR);
 
-    printf("Reading DISC\n.");
+    printf("Reading DISC.\n");
 
     while (state != STOP_S) {
       alarm(TIMEOUT_R);

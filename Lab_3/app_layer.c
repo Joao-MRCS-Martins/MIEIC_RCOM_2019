@@ -61,7 +61,7 @@ unsigned char *makeDataPacket(char* data, int *index, int *packet_size, int data
   else {
     *packet_size = MAX_PCKT_SIZE;
   }
-
+  
   unsigned char * packet = (unsigned char *) malloc((*packet_size + 4) * sizeof(unsigned char));
   packet[0] = C_DATA;
   packet[1] = N_SEQ;
@@ -72,6 +72,7 @@ unsigned char *makeDataPacket(char* data, int *index, int *packet_size, int data
   }
   N_SEQ = (N_SEQ + 1) % 255;
   *index += *packet_size;
+  *packet_size +=4;
   return packet;
 }
 
@@ -82,8 +83,9 @@ int senderApp(int port, char * file) {
     printf("Failed to retrieve file data.\n");
     return FILE_ERROR;
   }
-  int packet_size;
-  unsigned char * c_packet = makeControlPacket(file,data_size,&packet_size);
+
+  int c_packet_size;
+  unsigned char * c_packet = makeControlPacket(file,data_size,&c_packet_size);
 
   //open connection (llopen)
   int fd;
@@ -94,7 +96,7 @@ int senderApp(int port, char * file) {
   }
   
   //send start control packet
-  if(llwrite(fd, c_packet,packet_size) < 0) {
+  if(llwrite(fd, c_packet,c_packet_size) < 0) {
     printf("Failed to send start packet.\n");
     close(fd);
     free(c_packet);
@@ -103,12 +105,13 @@ int senderApp(int port, char * file) {
 
   int index = 0;
   unsigned char *d_packet;
+  int d_packet_size;
   while(1) {
-    if((d_packet = makeDataPacket(data,&index,&packet_size,data_size)) == NULL) {
+    if((d_packet = makeDataPacket(data,&index,&d_packet_size,data_size)) == NULL) {
       break;
     }
-
-    if(llwrite(fd, d_packet, packet_size) < 0) {
+    printf("d_packet_size: %d\n",d_packet_size);
+    if(llwrite(fd, d_packet, d_packet_size) < 0) {
       printf("Failed to send data packet.\n");
       free(c_packet);
       free(data);
@@ -121,7 +124,7 @@ int senderApp(int port, char * file) {
 
   //send end control packet
   c_packet[0] = C_END;
-  if(llwrite(fd, c_packet,data_size) < 0) {
+  if(llwrite(fd, c_packet,c_packet_size) < 0) {
     printf("Failed to send end packet.\n");
     return END_PCKT;
   }
@@ -268,7 +271,7 @@ int receiverApp(int port) {
   }
 
   // close connection (llclose)
-  if(llclose(fd,TRANSMITTER) < 0) {
+  if(llclose(fd,RECEIVER) < 0) {
     close(fd);
     printf("Failed to close connection properly with receiver.\n");
     return CONNECT_FAIL;
