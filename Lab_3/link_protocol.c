@@ -202,12 +202,10 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     if (state == STOP_S)
       break;
   } while (n_try < MAX_RETRIES);
-  alarm(0);
   if (n_try == MAX_RETRIES)
     return TIMEOUT_ERROR;
 
   n_seq ^= 1;
-
   printf("Written successfully.\n");
   return length;
 }
@@ -230,15 +228,17 @@ int llread(int fd, unsigned char *packets) {
   int datasize = 0;
   n_try = 0;
   while (state != END_R && n_try < MAX_RETRIES) {
-    printf("state thing: %d\n",state);
+    printf("big state: %d\n",state);
     switch (state) {
       case READ_R:
         while (state_read != STOP_I) {
           alarm(TIMEOUT_R);
           read(fd, &buffer, 1);
-          printf("read: %x\n",buffer);
-          state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer, &datasize);
+          state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer, &datasize);
+          printf("flag_answer: %d\n",flag_answer);
+          printf("state_read: %d\n",state_read);
         }
+        printf("finished reading\n");
         state = ANALIZE_R;
 
         break;

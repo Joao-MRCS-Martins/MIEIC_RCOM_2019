@@ -239,7 +239,6 @@ int receiverApp(int port) {
     close(fd);
     return STRT_PCKT;
   }
-  // printf("filename: %s\nfile_size: %d\n",filename,file_size);
 
   // open/create file indicated in start control packet
   int dest_fd = open(filename,O_WRONLY|O_CREAT|O_APPEND|O_TRUNC);

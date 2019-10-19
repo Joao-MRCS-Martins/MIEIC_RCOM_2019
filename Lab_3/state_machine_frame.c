@@ -58,7 +58,7 @@ void state_machine(int *state, unsigned char info,
   }
 }
 
-void state_machine_I(int *state, unsigned char info, unsigned char *packets, unsigned char *bcc_data, int C, int *datasize) {
+void state_machine_I(int *state, unsigned char info, unsigned char *packets, unsigned char *bcc_data, int *C, int *datasize) {
 
   switch (*state) {
   case START_S:
@@ -79,7 +79,7 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets, uns
 
   case A_RCV:
     if (info == C_S0 || info == C_S1) {
-      C = info;
+      *C = info;
       *state = C_RCV;
     } else if (info == FLAG)
       *state = FLAG_RCV;
@@ -88,7 +88,7 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets, uns
     break;
 
   case C_RCV:
-    if (info == (A_SENDER ^ C)) {
+    if (info == (A_SENDER ^ *C)) {
       *state = BCC_RCV;
     } else if (info == FLAG)
       *state = FLAG_RCV;
