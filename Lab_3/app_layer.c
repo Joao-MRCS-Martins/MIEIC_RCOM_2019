@@ -238,13 +238,13 @@ int receiverApp(int port) {
   // receive packets and process them into file data
   int rcv_bytes = 0;
   while(rcv_bytes != file_size) {
-    printf("N seq: %d Rcv bytes: %d bytes left: %d\n",N_SEQ,rcv_bytes,file_size-rcv_bytes);
     if(getPacketInfo(fd,dest_fd,&rcv_bytes) < 0) {
       printf("Error receiving package.Terminating.\n"); 
       close(dest_fd);
       close(fd);
       return DATA_PCKT;
     }
+    // printf("N seq: %d Rcv bytes: %d bytes left: %d\n",N_SEQ,rcv_bytes,file_size-rcv_bytes);
   }
   // receive end control packet and validate with start packet
   if(checkEndInfo(fd,c_packet) < 0) {

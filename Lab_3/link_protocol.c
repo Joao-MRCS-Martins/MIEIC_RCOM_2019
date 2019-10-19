@@ -207,7 +207,6 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   }
 
   n_seq ^= 1;
-  printf("Written successfully.\n");
   free(data);
   return length;
 }
@@ -252,6 +251,7 @@ int llread(int fd, unsigned char *packets) {
               frame[2] = RR_R0;
             } else
               frame[2] = RR_R1;
+            memcpy(packets,dest_data,final_size);
           }
           else {
             if (flag_answer == C_S0)
@@ -401,26 +401,3 @@ int llclose(int fd, int flag) {
   close(fd);
   return 0;
 }
-
-// int main(int argc, char *argv[]) {
-//   if (argc < 3) {
-//     printf("Wrong arguments.\n");
-//     return -5;
-//   }
-
-//   int fd = llopen(atoi(argv[1]), atoi(argv[2]));
-//   if(fd < 0) {
-//     printf("Error opening connection.\n");
-//     return TIMEOUT_ERROR;
-//   }
-//   if (atoi(argv[2]) == 0) {
-//     //unsigned char mensagem[] = {0x34, 0x43, FLAG, ESCAPE, 0X48};
-//     unsigned char mensagem[] = "asss}vbba";
-//     llwrite(fd, mensagem, strlen(mensagem));
-//   } else {
-//     unsigned char mensage[255];
-//     int n = llread(fd, mensage);
-//     printf("n: %d\n", n);
-//   }
-//   return llclose(fd, atoi(argv[2]));
-// }
