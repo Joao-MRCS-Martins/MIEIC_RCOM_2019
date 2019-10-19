@@ -177,7 +177,6 @@ int llwrite(int fd, unsigned char *buffer, int length) {
    // bcc2 generation & stuffing
   int bccsize = 0;
   unsigned char *bcc2 = bcc2_calc(buffer, length);
-  printf("bcc2 calc: %x\n",*bcc2);
   unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2, &bccsize);
   memcpy(&frame[4 + datasize], bcc2_stuffed, bccsize);
   frame[4 + datasize + bccsize] = FLAG;
@@ -187,15 +186,14 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
   n_try = 0;
   frame_size = datasize + bccsize + 5;
-  printf("data_size: %d\n",datasize);
   do {
     write(fd, &frame, frame_size);
-    n_try++;
 
     alrmSet = FALSE;
     alarm(TIMEOUT);
     while (alrmSet != TRUE && state != STOP_S) {
       read(fd, &aux, 1);
+      printf("read: %x\n",aux);
       state_machine(&state, aux, &header);
       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1)) {
         break;
@@ -204,11 +202,10 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     if (state == STOP_S)
       break;
   } while (n_try < MAX_RETRIES);
-  printf("n_try: %d\n",n_try);
+  alarm(0);
   if (n_try == MAX_RETRIES)
     return TIMEOUT_ERROR;
 
-  printf("What is going.\n");
   n_seq ^= 1;
 
   printf("Written successfully.\n");
@@ -233,6 +230,7 @@ int llread(int fd, unsigned char *packets) {
   int datasize = 0;
   n_try = 0;
   while (state != END_R && n_try < MAX_RETRIES) {
+    printf("state thing: %d\n",state);
     switch (state) {
       case READ_R:
         while (state_read != STOP_I) {
@@ -246,13 +244,10 @@ int llread(int fd, unsigned char *packets) {
         break;
       case ANALIZE_R:
         {
-          // printf("packets: %s\n",packets);
           unsigned char *bcc2 = bcc2_destuffing(bcc_data);
           int final_size;
           unsigned char *dest_data = data_destuffing(packets, datasize, &final_size);
           unsigned char *packets_bcc = bcc2_calc(dest_data, final_size);
-          // printf("last info byte: %x\n",packets[datasize-1]);
-          // printf("datasize: %d\n",datasize);
           if (*bcc2 == *packets_bcc) {
             if (flag_answer == C_S0) {
               frame[2] = RR_R0;
@@ -292,8 +287,10 @@ int llread(int fd, unsigned char *packets) {
           REJ1 = 0;
           alarm(TIMEOUT_R);
         }
-      } else
+      } else{
         state = END_R;
+
+      }
     case END_R:
         break;
     }
