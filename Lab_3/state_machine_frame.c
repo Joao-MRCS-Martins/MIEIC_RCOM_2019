@@ -119,7 +119,7 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets, uns
           bcc_data[1] = aux2;
           *datasize = i - 2;
         } else{
-          packets[i] = aux1;
+          packets[i-2] = aux1;
           *datasize = i - 1;
         }
         bcc_data[0] = aux2;

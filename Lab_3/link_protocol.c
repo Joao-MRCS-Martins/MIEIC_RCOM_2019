@@ -20,12 +20,12 @@ int n_try = 0;
 int alrmSet = FALSE;
 int n_seq = 0;
 unsigned char frame[256];
+int frame_size = 0;
 
 unsigned char *bcc2_calc(unsigned char *message, int length) {
   unsigned char *bcc2 = (unsigned char *)malloc(sizeof(unsigned char));
   *bcc2 = message[0];
   for (int i = 1; i < length; i++) {
-
     *bcc2 ^= message[i];
   }
 
@@ -39,7 +39,7 @@ void alarmHandler() {
     printf("Timeout. Exiting ...\n");
     exit(TIMEOUT_ERROR);  
   }else {
-    write(fd,&frame,5);
+    write(fd,&frame,frame_size);
     alarm(TIMEOUT);
   }
   printf("Alarm nº%d\n", n_try);
@@ -105,13 +105,14 @@ int llopen(int port, int flag) {
     frame[1] = A_SENDER;
     frame[2] = C_SET;
     frame[3] = bcc_calc(frame[1], frame[2]);
+    frame_size = 5;
     header.A_EXCT = A_SENDER;
     header.C_EXCT = C_UA;
 
     printf("Sending SET frame\n");
 
     do {
-      write(fd, &frame, 5);
+      write(fd, &frame, frame_size);
       alarm(TIMEOUT);
       printf("Message sent. Processing UA.\n");
       while (state != STOP_S) {
@@ -171,23 +172,24 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   // byte stuffing on file data
   int datasize = 0;
   unsigned char *data = data_stuffing(buffer, length, &datasize);
-  strncpy(&frame[4], data, datasize);
-
-  // bcc2 generation & stuffing
+  memcpy(&frame[4], data, datasize);
+  
+   // bcc2 generation & stuffing
   int bccsize = 0;
   unsigned char *bcc2 = bcc2_calc(buffer, length);
+  printf("bcc2 calc: %x\n",*bcc2);
   unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2, &bccsize);
-  strncpy(&frame[4 + datasize], bcc2_stuffed, bccsize);
+  memcpy(&frame[4 + datasize], bcc2_stuffed, bccsize);
   frame[4 + datasize + bccsize] = FLAG;
 
   // prepare reply processing
   header.A_EXCT = A_SENDER;
   header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
   n_try = 0;
-  
-  
+  frame_size = datasize + bccsize + 5;
+  printf("data_size: %d\n",datasize);
   do {
-    write(fd, &frame, datasize + bccsize + 5);
+    write(fd, &frame, frame_size);
     n_try++;
 
     alrmSet = FALSE;
@@ -195,16 +197,18 @@ int llwrite(int fd, unsigned char *buffer, int length) {
     while (alrmSet != TRUE && state != STOP_S) {
       read(fd, &aux, 1);
       state_machine(&state, aux, &header);
-      if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1))
+      if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1)) {
         break;
+      }
     }
     if (state == STOP_S)
       break;
   } while (n_try < MAX_RETRIES);
-
+  printf("n_try: %d\n",n_try);
   if (n_try == MAX_RETRIES)
     return TIMEOUT_ERROR;
 
+  printf("What is going.\n");
   n_seq ^= 1;
 
   printf("Written successfully.\n");
@@ -234,6 +238,7 @@ int llread(int fd, unsigned char *packets) {
         while (state_read != STOP_I) {
           alarm(TIMEOUT_R);
           read(fd, &buffer, 1);
+          printf("read: %x\n",buffer);
           state_machine_I(&state_read, buffer, packets, bcc_data, flag_answer, &datasize);
         }
         state = ANALIZE_R;
@@ -241,11 +246,13 @@ int llread(int fd, unsigned char *packets) {
         break;
       case ANALIZE_R:
         {
+          // printf("packets: %s\n",packets);
           unsigned char *bcc2 = bcc2_destuffing(bcc_data);
           int final_size;
           unsigned char *dest_data = data_destuffing(packets, datasize, &final_size);
           unsigned char *packets_bcc = bcc2_calc(dest_data, final_size);
-
+          // printf("last info byte: %x\n",packets[datasize-1]);
+          // printf("datasize: %d\n",datasize);
           if (*bcc2 == *packets_bcc) {
             if (flag_answer == C_S0) {
               frame[2] = RR_R0;
@@ -399,25 +406,25 @@ int llclose(int fd, int flag) {
   return 0;
 }
 
-int main(int argc, char *argv[]) {
-  if (argc < 3) {
-    printf("Wrong arguments.\n");
-    return -5;
-  }
+// int main(int argc, char *argv[]) {
+//   if (argc < 3) {
+//     printf("Wrong arguments.\n");
+//     return -5;
+//   }
 
-  int fd = llopen(atoi(argv[1]), atoi(argv[2]));
-  if(fd < 0) {
-    printf("Error opening connection.\n");
-    return TIMEOUT_ERROR;
-  }
-  if (atoi(argv[2]) == 0) {
-    //unsigned char mensagem[] = {0x34, 0x43, FLAG, ESCAPE, 0X48};
-    unsigned char mensagem[] = "asss}vbba";
-    llwrite(fd, mensagem, strlen(mensagem));
-  } else {
-    unsigned char mensage[255];
-    int n = llread(fd, mensage);
-    printf("n: %d\n", n);
-  }
-  return llclose(fd, atoi(argv[2]));
-}
+//   int fd = llopen(atoi(argv[1]), atoi(argv[2]));
+//   if(fd < 0) {
+//     printf("Error opening connection.\n");
+//     return TIMEOUT_ERROR;
+//   }
+//   if (atoi(argv[2]) == 0) {
+//     //unsigned char mensagem[] = {0x34, 0x43, FLAG, ESCAPE, 0X48};
+//     unsigned char mensagem[] = "asss}vbba";
+//     llwrite(fd, mensagem, strlen(mensagem));
+//   } else {
+//     unsigned char mensage[255];
+//     int n = llread(fd, mensage);
+//     printf("n: %d\n", n);
+//   }
+//   return llclose(fd, atoi(argv[2]));
+// }
