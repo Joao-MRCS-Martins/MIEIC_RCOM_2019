@@ -48,23 +48,23 @@ void makeControlPacket(char *filename, int size, int *packet_size, unsigned char
 }
 
 int makeDataPacket(char* data, int *index, unsigned char *packet, int *packet_size, int data_size) {
-  printf("MAKE DATA PACKET\n");
-  if(*index == data_size) {
+  
+  if(*index >= data_size) {
     return DATA_PCKT;
   }
 
-  if(*index + MAX_PCKT_SIZE - 4 > data_size) {
-    *packet_size = data_size - *index + 4;
+  if(*index + MAX_PCKT_SIZE > data_size) {
+    *packet_size = data_size - *index+4;
   }
   else {
     *packet_size = MAX_PCKT_SIZE;
   }
-  
+  printf("packet_size; %d\n",*packet_size);
   packet[0] = C_DATA;
   packet[1] = N_SEQ;
-  packet[2] = *packet_size / 256;
-  packet[3] = *packet_size % 256;
-  for(int i = 0; i< *packet_size; i++) {
+  packet[2] = (*packet_size-4) / 256;
+  packet[3] = (*packet_size-4) % 256;
+  for(int i = 0; i< *packet_size-4; i++) {
     packet[4+i] = data[*index + i];
   }
   N_SEQ = (N_SEQ + 1) % 255;

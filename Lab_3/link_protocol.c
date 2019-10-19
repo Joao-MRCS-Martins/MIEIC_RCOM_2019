@@ -24,11 +24,8 @@ int frame_size = 0;
 
 void bcc2_calc(unsigned char *message, int length,unsigned char *bcc2) {
   *bcc2 = message[0];
-  printf("length: %d\n",length);
   for (int i = 1; i < length; i++) {
-    printf("message[%d]: %x\n",i,message[i]);
     *bcc2 ^= message[i];
-    printf("bcc2: %x\n",*bcc2);
   }
 }
 
