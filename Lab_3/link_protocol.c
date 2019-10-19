@@ -229,17 +229,14 @@ int llread(int fd, unsigned char *packets) {
   int datasize = 0;
   n_try = 0;
   while (state != END_R && n_try < MAX_RETRIES) {
-    // printf("big state: %d\n",state);
     switch (state) {
       case READ_R:
         do {
           alarm(TIMEOUT_R);
           read(fd, &buffer, 1);
-          // printf("read: %x\n",buffer);
           state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer, &datasize);
         } while (state_read != STOP_I);
         state = ANALIZE_R;
-
         break;
       case ANALIZE_R:
         {
@@ -249,7 +246,6 @@ int llread(int fd, unsigned char *packets) {
           unsigned char *dest_data = data_destuffing(packets, datasize, &final_size);
           unsigned char packets_bcc;
           bcc2_calc(dest_data, final_size,&packets_bcc);
-          
           if (bcc2 == packets_bcc) {
             if (flag_answer == C_S0) {
               frame[2] = RR_R0;

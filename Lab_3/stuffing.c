@@ -50,17 +50,24 @@ unsigned char *data_destuffing(unsigned char *data, int size, int *final_size) {
   int sizeless = 0;
   int j = 0;
   for (int i = 0; i < size;) {
-    if (data[i] == ESCAPE && data[i + 1] == FLAG_ESC) {
-      stuffed_data[j] = FLAG;
-      i += 2;
-      sizeless++;
-    } else if (data[i] == ESCAPE && data[i + 1] == ESC_ESC) {
-      stuffed_data[j] = ESCAPE;
-      i += 2;
-      sizeless++;
-    } else {
+
+    if(i == size-1) {
       stuffed_data[j] = data[i];
       i++;
+    }
+    else {
+      if (data[i] == ESCAPE && data[i + 1] == FLAG_ESC) {
+        stuffed_data[j] = FLAG;
+        i += 2;
+        sizeless++;
+      } else if (data[i] == ESCAPE && data[i + 1] == ESC_ESC) {
+        stuffed_data[j] = ESCAPE;
+        i += 2;
+        sizeless++;
+      } else {
+        stuffed_data[j] = data[i];
+        i++;
+      }
     }
     j++;
   }

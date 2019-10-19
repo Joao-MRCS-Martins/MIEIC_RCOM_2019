@@ -119,19 +119,19 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets, uns
           *datasize = i - 2;
         } else{
           packets[i-2] = aux1;
+          bcc_data[0] = aux2;
           *datasize = i - 1;
         }
-        bcc_data[0] = aux2;
       } else {
         if (aux2 == ESCAPE) {
           bcc_data[0] = aux2;
           bcc_data[1] = aux1;
           *datasize = i - 2;
         } else{
-          packets[i] = aux2;
+          packets[i-2] = aux2;
+          bcc_data[0] = aux1;
           *datasize = i - 1;
         }
-        bcc_data[0] = aux1;
       }
       
       *state = STOP_I;

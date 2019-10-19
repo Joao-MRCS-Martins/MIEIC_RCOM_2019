@@ -52,7 +52,6 @@ int makeDataPacket(char* data, int *index, unsigned char *packet, int *packet_si
   if(*index >= data_size-1) {
     return DATA_PCKT;
   }
-  printf("data_size: %d\n",data_size);
 
   if(*index + MAX_PCKT_SIZE > data_size) {
     *packet_size = data_size - *index+4;
@@ -60,19 +59,15 @@ int makeDataPacket(char* data, int *index, unsigned char *packet, int *packet_si
   else {
     *packet_size = MAX_PCKT_SIZE;
   }
-  printf("packet_size; %d\n",*packet_size);
   packet[0] = C_DATA;
   packet[1] = N_SEQ;
   packet[2] = (*packet_size-4) / 256;
   packet[3] = (*packet_size-4) % 256;
-  printf("packet[2]; %d\n",packet[2]);
-  printf("packet[3]]; %d\n",packet[3]);
   for(int i = 0; i< *packet_size-4; i++) {
     packet[4+i] = data[*index + i];
   }
   N_SEQ = (N_SEQ + 1) % 255;
   *index += *packet_size-4;
-  printf("index: %d\n",*index);
   return 0;
 }
 
@@ -115,10 +110,8 @@ int senderApp(int port, char * file) {
       return DATA_PCKT;
     }
   }
-  printf("waiting to end myl\n");
   //send end control packet
   c_packet[0] = C_END;
-  printf("c_packet_size: %d\n",c_packet_size);
   if(llwrite(fd, c_packet,c_packet_size) < 0) {
     printf("Failed to send end packet.\n");
     return END_PCKT;
@@ -200,7 +193,6 @@ int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
 
 int checkEndInfo(int fd, unsigned char *c_packet) {
   unsigned char e_packet[MAX_BUFF + 9];
-  printf("wating to end myl\n");
   if(llread(fd,e_packet) <0) {
     return END_PCKT;
   }
