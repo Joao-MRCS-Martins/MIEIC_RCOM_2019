@@ -49,9 +49,10 @@ void makeControlPacket(char *filename, int size, int *packet_size, unsigned char
 
 int makeDataPacket(char* data, int *index, unsigned char *packet, int *packet_size, int data_size) {
   
-  if(*index >= data_size) {
+  if(*index >= data_size-1) {
     return DATA_PCKT;
   }
+  printf("data_size: %d\n",data_size);
 
   if(*index + MAX_PCKT_SIZE > data_size) {
     *packet_size = data_size - *index+4;
@@ -64,11 +65,14 @@ int makeDataPacket(char* data, int *index, unsigned char *packet, int *packet_si
   packet[1] = N_SEQ;
   packet[2] = (*packet_size-4) / 256;
   packet[3] = (*packet_size-4) % 256;
+  printf("packet[2]; %d\n",packet[2]);
+  printf("packet[3]]; %d\n",packet[3]);
   for(int i = 0; i< *packet_size-4; i++) {
     packet[4+i] = data[*index + i];
   }
   N_SEQ = (N_SEQ + 1) % 255;
-  *index += *packet_size;
+  *index += *packet_size-4;
+  printf("index: %d\n",*index);
   return 0;
 }
 
@@ -111,9 +115,10 @@ int senderApp(int port, char * file) {
       return DATA_PCKT;
     }
   }
-
+  printf("waiting to end myl\n");
   //send end control packet
   c_packet[0] = C_END;
+  printf("c_packet_size: %d\n",c_packet_size);
   if(llwrite(fd, c_packet,c_packet_size) < 0) {
     printf("Failed to send end packet.\n");
     return END_PCKT;
@@ -195,6 +200,7 @@ int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
 
 int checkEndInfo(int fd, unsigned char *c_packet) {
   unsigned char e_packet[MAX_BUFF + 9];
+  printf("wating to end myl\n");
   if(llread(fd,e_packet) <0) {
     return END_PCKT;
   }
@@ -241,21 +247,18 @@ int receiverApp(int port) {
   int rcv_bytes = 0;
   while(rcv_bytes != file_size) {
     if(getPacketInfo(fd,dest_fd,&rcv_bytes) < 0) {
-      printf("Error receiving package.Terminating.\n");
-      
+      printf("Error receiving package.Terminating.\n"); 
       close(dest_fd);
       close(fd);
       return DATA_PCKT;
     }
   }
-
   // receive end control packet and validate with start packet
   if(checkEndInfo(fd,c_packet) < 0) {
     
     close(fd);
     return END_PCKT;
   }
-
   
   // close connection (llclose)
   if(llclose(fd,RECEIVER) < 0) {
