@@ -59,7 +59,7 @@ void state_machine(int *state, unsigned char info,
 }
 
 void state_machine_I(int *state, unsigned char info, unsigned char *packets, unsigned char *bcc_data, int *C, int *datasize) {
-
+  printf("i:%d\n",i);
   switch (*state) {
   case START_S:
     if (info == FLAG) {
@@ -135,6 +135,9 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets, uns
         bcc_data[0] = aux1;
       }
       *state = STOP_I;
+      i=0;
+      aux1='0';
+      aux2='0';
     }
     break;
   case STOP_I:

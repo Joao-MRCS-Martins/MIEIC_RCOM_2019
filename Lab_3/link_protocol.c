@@ -163,6 +163,7 @@ int llwrite(int fd, unsigned char *buffer, int length) {
 
   frame[0] = FLAG;
   frame[1] = A_SENDER;
+  printf("n_seq current: %x\n",n_seq);
   if (n_seq == 0) // check sequence number
     frame[2] = C_S0;
   else
@@ -180,7 +181,6 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2, &bccsize);
   memcpy(&frame[4 + datasize], bcc2_stuffed, bccsize);
   frame[4 + datasize + bccsize] = FLAG;
-
   // prepare reply processing
   header.A_EXCT = A_SENDER;
   header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
@@ -188,7 +188,7 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   frame_size = datasize + bccsize + 5;
   do {
     write(fd, &frame, frame_size);
-
+    printf("sending message\n");
     alrmSet = FALSE;
     alarm(TIMEOUT);
     while (alrmSet != TRUE && state != STOP_S) {
@@ -228,17 +228,17 @@ int llread(int fd, unsigned char *packets) {
   int datasize = 0;
   n_try = 0;
   while (state != END_R && n_try < MAX_RETRIES) {
-    printf("big state: %d\n",state);
+    // printf("big state: %d\n",state);
     switch (state) {
       case READ_R:
-        while (state_read != STOP_I) {
+          do {
           alarm(TIMEOUT_R);
           read(fd, &buffer, 1);
           state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer, &datasize);
-          printf("flag_answer: %d\n",flag_answer);
-          printf("state_read: %d\n",state_read);
-        }
-        printf("finished reading\n");
+          } while (state_read != STOP_I);
+        // for(int i = 0; i < datasize; i++) {
+          // printf("packets[%d]: %x\n",i,packets[i]);
+        // }
         state = ANALIZE_R;
 
         break;
@@ -248,6 +248,7 @@ int llread(int fd, unsigned char *packets) {
           int final_size;
           unsigned char *dest_data = data_destuffing(packets, datasize, &final_size);
           unsigned char *packets_bcc = bcc2_calc(dest_data, final_size);
+          // printf("bcc2: %x packet_bcc: %x\n",*bcc2,*packets_bcc);
           if (*bcc2 == *packets_bcc) {
             if (flag_answer == C_S0) {
               frame[2] = RR_R0;
