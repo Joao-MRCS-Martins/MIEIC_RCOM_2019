@@ -80,7 +80,7 @@
 /////////////////////////////////////////////////////////
 
 ///// APPLICATION LAYER /////                                                                                                 
-#define MAX_PCKT_SIZE 512 /* Maximum of bytes in each packet */
+#define MAX_PCKT_SIZE 516 /* Maximum of bytes in each packet (4 bytes for header 512 for data) */
 #define MAX_BUFF 50 /* Maximum length of a file name */
 #define C_PCKT_SIZE 9 /* Known size (in bytes) of control packet (C,T1,L1,V1,T2,L2) */
 

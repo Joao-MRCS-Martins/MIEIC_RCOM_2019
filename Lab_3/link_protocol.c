@@ -22,14 +22,14 @@ int n_seq = 0;
 unsigned char frame[256];
 int frame_size = 0;
 
-unsigned char *bcc2_calc(unsigned char *message, int length) {
-  unsigned char *bcc2 = (unsigned char *)malloc(sizeof(unsigned char));
+void bcc2_calc(unsigned char *message, int length,unsigned char *bcc2) {
   *bcc2 = message[0];
+  printf("length: %d\n",length);
   for (int i = 1; i < length; i++) {
+    printf("message[%d]: %x\n",i,message[i]);
     *bcc2 ^= message[i];
+    printf("bcc2: %x\n",*bcc2);
   }
-
-  return bcc2;
 }
 
 void alarmHandler() {
@@ -155,15 +155,14 @@ int llopen(int port, int flag) {
 }
 
 int llwrite(int fd, unsigned char *buffer, int length) {
-
-  unsigned char frame[256];
+  unsigned char frame[MAX_PCKT_SIZE + 6];
   struct header_fields header;
   unsigned char aux;
   int state = 0;
 
   frame[0] = FLAG;
   frame[1] = A_SENDER;
-  printf("n_seq current: %x\n",n_seq);
+  
   if (n_seq == 0) // check sequence number
     frame[2] = C_S0;
   else
@@ -177,8 +176,10 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   
    // bcc2 generation & stuffing
   int bccsize = 0;
-  unsigned char *bcc2 = bcc2_calc(buffer, length);
-  unsigned char *bcc2_stuffed = bcc2_stuffing(bcc2, &bccsize);
+  unsigned char bcc2;
+  bcc2_calc(buffer, length,&bcc2);
+  unsigned char bcc2_stuffed[2];
+  bcc2_stuffing(&bcc2, &bccsize,bcc2_stuffed);
   memcpy(&frame[4 + datasize], bcc2_stuffed, bccsize);
   frame[4 + datasize + bccsize] = FLAG;
   // prepare reply processing
@@ -203,14 +204,12 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   } while (n_try < MAX_RETRIES);
   
   if (n_try == MAX_RETRIES) {
-    free(bcc2_stuffed);
     free(data);
     return TIMEOUT_ERROR;
   }
 
   n_seq ^= 1;
   printf("Written successfully.\n");
-  free(bcc2_stuffed);
   free(data);
   return length;
 }
@@ -251,9 +250,10 @@ int llread(int fd, unsigned char *packets) {
           bcc2_destuffing(bcc_data,&bcc2);
           int final_size;
           unsigned char *dest_data = data_destuffing(packets, datasize, &final_size);
-          unsigned char *packets_bcc = bcc2_calc(dest_data, final_size);
+          unsigned char packets_bcc;
+          bcc2_calc(dest_data, final_size,&packets_bcc);
           
-          if (bcc2 == *packets_bcc) {
+          if (bcc2 == packets_bcc) {
             if (flag_answer == C_S0) {
               frame[2] = RR_R0;
             } else
@@ -272,7 +272,6 @@ int llread(int fd, unsigned char *packets) {
           frame[4] = FLAG;
           state = WRITE_R;
           free(dest_data);
-          free(packets_bcc);
           break;
         }
         

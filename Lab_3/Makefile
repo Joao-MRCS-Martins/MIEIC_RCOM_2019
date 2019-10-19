@@ -6,10 +6,10 @@ OBJ = link_protocol.o state_machine_frame.o stuffing.o app_layer.o
 #EMITTER = 
 
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -g -o $@ $< $(CFLAGS)
 
 link: $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -g -o $@ $^ $(CFLAGS)
 
 clean:
 	rm -f *.o link

@@ -47,20 +47,19 @@ void makeControlPacket(char *filename, int size, int *packet_size, unsigned char
   *packet_size = 9+ strlen(filename);
 }
 
-unsigned char *makeDataPacket(char* data, int *index, int *packet_size, int data_size) {
-
+int makeDataPacket(char* data, int *index, unsigned char *packet, int *packet_size, int data_size) {
+  printf("MAKE DATA PACKET\n");
   if(*index == data_size) {
-    return NULL;
+    return DATA_PCKT;
   }
 
-  if(*index + MAX_PCKT_SIZE > data_size) {
-    *packet_size = data_size - *index;
+  if(*index + MAX_PCKT_SIZE - 4 > data_size) {
+    *packet_size = data_size - *index + 4;
   }
   else {
     *packet_size = MAX_PCKT_SIZE;
   }
   
-  unsigned char * packet = (unsigned char *) malloc((*packet_size + 4) * sizeof(unsigned char));
   packet[0] = C_DATA;
   packet[1] = N_SEQ;
   packet[2] = *packet_size / 256;
@@ -70,8 +69,7 @@ unsigned char *makeDataPacket(char* data, int *index, int *packet_size, int data
   }
   N_SEQ = (N_SEQ + 1) % 255;
   *index += *packet_size;
-  *packet_size +=4;
-  return packet;
+  return 0;
 }
 
 int senderApp(int port, char * file) {  
@@ -101,19 +99,17 @@ int senderApp(int port, char * file) {
   }
 
   int index = 0;
-  unsigned char *d_packet;
+  unsigned char d_packet[MAX_PCKT_SIZE];
   int d_packet_size;
   while(1) {
-    if((d_packet = makeDataPacket(data,&index,&d_packet_size,data_size)) == NULL) {
+    if(makeDataPacket(data,&index,d_packet,&d_packet_size,data_size) <0 ) {
       break;
     }
     if(llwrite(fd, d_packet, d_packet_size) < 0) {
       printf("Failed to send data packet.\n");
       free(data);
-      free(d_packet);
       return DATA_PCKT;
     }
-    free(d_packet);
   }
 
   //send end control packet
@@ -169,7 +165,7 @@ int getStartInfo(int fd, char *filename, int *file_size, unsigned char *c_packet
 }
 
 int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
-  unsigned char d_packet[MAX_PCKT_SIZE + 4];
+  unsigned char d_packet[MAX_PCKT_SIZE + 4] = "";
 
   if(llread(port_fd,d_packet) <0) {
     printf("Failed to read data packet.\n");
