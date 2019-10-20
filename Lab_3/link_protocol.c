@@ -50,7 +50,6 @@ void alarmHandlerR() {
 unsigned char bcc_calc(unsigned char a, unsigned char c) { return a ^ c; }
 
 int llopen(int port, int flag) {
-
   char port_path[MAX_BUFF];
   struct termios newtio;
   struct header_fields header;
@@ -62,7 +61,7 @@ int llopen(int port, int flag) {
   }
 
   // sprintf(port_path, "/dev/ttyS%d", port);
-  sprintf(port_path, "/dev/pts/%d", port);
+  sprintf(port_path, "/dev/ttyS%d", port);
 
   fd = open(port_path, O_RDWR | O_NOCTTY);
   if (fd < 0) {
@@ -227,12 +226,15 @@ int llread(int fd, unsigned char *packets) {
   signal(SIGALRM, alarmHandlerR);
   int datasize = 0;
   n_try = 0;
+
   while (state != END_R && n_try < MAX_RETRIES) {
+    printf("state %d", state);
     switch (state) {
     case READ_R:
       do {
         alarm(TIMEOUT_R);
         read(fd, &buffer, 1);
+        printf("read : %x\n", buffer);
         state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer,
                         &datasize);
       } while (state_read != STOP_I);
@@ -276,7 +278,9 @@ int llread(int fd, unsigned char *packets) {
           state = READ_R;
         } else {
           REJ0 = 0;
-          alarm(TIMEOUT_R);
+          //alarm(TIMEOUT_R);
+          //n_try++;
+          exit();
         }
       } else if (frame[2] == REJ_R1) {
         if (REJ1 < MAX_REJ) {
@@ -284,7 +288,9 @@ int llread(int fd, unsigned char *packets) {
           state = READ_R;
         } else {
           REJ1 = 0;
-          alarm(TIMEOUT_R);
+          //alarm(TIMEOUT_R);
+          //n_try++;
+          exit();
         }
       } else {
         state = END_R;
@@ -293,10 +299,13 @@ int llread(int fd, unsigned char *packets) {
       break;
     }
   }
+
+  printf("size of packets %lu\n", strlen(packets));
   return strlen(packets);
 }
 
 int llclose(int fd, int flag) {
+  printf("close");
   int state = 0;
   unsigned char buffer;
   unsigned char frame[256];
