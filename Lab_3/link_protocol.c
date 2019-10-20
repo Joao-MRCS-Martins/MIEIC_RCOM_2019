@@ -22,7 +22,7 @@ int n_seq = 0;
 unsigned char frame[256];
 int frame_size = 0;
 
-void bcc2_calc(unsigned char *message, int length,unsigned char *bcc2) {
+void bcc2_calc(unsigned char *message, int length, unsigned char *bcc2) {
   *bcc2 = message[0];
   for (int i = 1; i < length; i++) {
     *bcc2 ^= message[i];
@@ -32,11 +32,11 @@ void bcc2_calc(unsigned char *message, int length,unsigned char *bcc2) {
 void alarmHandler() {
   alrmSet = TRUE;
   n_try++;
-  if(n_try == MAX_RETRIES) {
+  if (n_try == MAX_RETRIES) {
     printf("Timeout. Exiting ...\n");
-    exit(TIMEOUT_ERROR);  
-  }else {
-    write(fd,&frame,frame_size);
+    exit(TIMEOUT_ERROR);
+  } else {
+    write(fd, &frame, frame_size);
     alarm(TIMEOUT);
   }
   printf("Alarm nº%d\n", n_try);
@@ -57,14 +57,12 @@ int llopen(int port, int flag) {
   unsigned char aux;
   int state = 0;
 
-  signal(SIGALRM, alarmHandler);
-
   if (flag != TRANSMITTER && flag != RECEIVER) {
     return INVALID_ACTOR;
   }
 
   // sprintf(port_path, "/dev/ttyS%d", port);
-  sprintf(port_path, "/dev/ttyS%d", port);
+  sprintf(port_path, "/dev/pts/%d", port);
 
   fd = open(port_path, O_RDWR | O_NOCTTY);
   if (fd < 0) {
@@ -84,8 +82,8 @@ int llopen(int port, int flag) {
 
   newtio.c_lflag = 0;
 
-  newtio.c_cc[VTIME] = 0; 
-  newtio.c_cc[VMIN] = 1;  
+  newtio.c_cc[VTIME] = 0;
+  newtio.c_cc[VMIN] = 1;
 
   tcflush(fd, TCIOFLUSH);
 
@@ -97,6 +95,7 @@ int llopen(int port, int flag) {
   printf("Serial port set up.\n");
 
   if (flag == TRANSMITTER) {
+    signal(SIGALRM, alarmHandler);
     // FILL SET FRAME
     frame[0] = frame[4] = FLAG;
     frame[1] = A_SENDER;
@@ -129,9 +128,11 @@ int llopen(int port, int flag) {
   }
 
   if (flag == RECEIVER) {
+    signal(SIGALRM, alarmHandlerR);
+
     header.A_EXCT = A_SENDER;
     header.C_EXCT = C_SET;
-    alarm(TIMEOUT);
+    alarm(TIMEOUT_R);
 
     printf("Processing SET.\n");
     while (state != STOP_S) {
@@ -152,14 +153,14 @@ int llopen(int port, int flag) {
 }
 
 int llwrite(int fd, unsigned char *buffer, int length) {
-  unsigned char frame[2*MAX_PCKT_SIZE + 6];
+  unsigned char frame[2 * MAX_PCKT_SIZE + 6];
   struct header_fields header;
   unsigned char aux;
   int state = 0;
 
   frame[0] = FLAG;
   frame[1] = A_SENDER;
-  
+
   if (n_seq == 0) // check sequence number
     frame[2] = C_S0;
   else
@@ -169,15 +170,14 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   // byte stuffing on file data
   int datasize = 0;
   unsigned char *data = data_stuffing(buffer, length, &datasize);
-  // printf("datasize: %dlen %d\n",datasize,length);
   memcpy(&frame[4], data, datasize);
-  
-   // bcc2 generation & stuffing
+
+  // bcc2 generation & stuffing
   int bccsize = 0;
   unsigned char bcc2;
-  bcc2_calc(buffer, length,&bcc2);
+  bcc2_calc(buffer, length, &bcc2);
   unsigned char bcc2_stuffed[2];
-  bcc2_stuffing(&bcc2, &bccsize,bcc2_stuffed);
+  bcc2_stuffing(&bcc2, &bccsize, bcc2_stuffed);
   memcpy(&frame[4 + datasize], bcc2_stuffed, bccsize);
   frame[4 + datasize + bccsize] = FLAG;
   // prepare reply processing
@@ -186,23 +186,21 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   n_try = 0;
   frame_size = datasize + bccsize + 5;
   do {
-    int resu = write(fd, &frame, frame_size);
-	printf("resu %d\n", resu);
+    write(fd, &frame, frame_size);
     alrmSet = FALSE;
     alarm(TIMEOUT);
     while (alrmSet != TRUE && state != STOP_S) {
       read(fd, &aux, 1);
-      // printf("read: %x\n",aux);
       state_machine(&state, aux, &header);
       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1)) {
-		state = 0;
+        state = 0;
         break;
       }
     }
     if (state == STOP_S)
       break;
   } while (n_try < MAX_RETRIES);
-  
+
   if (n_try == MAX_RETRIES) {
     free(data);
     return TIMEOUT_ERROR;
@@ -225,52 +223,51 @@ int llread(int fd, unsigned char *packets) {
   int flag_answer = 0;
 
   unsigned char bcc_data[2];
-  
 
   signal(SIGALRM, alarmHandlerR);
   int datasize = 0;
   n_try = 0;
   while (state != END_R && n_try < MAX_RETRIES) {
     switch (state) {
-      case READ_R:
-        do {
-          alarm(TIMEOUT_R);
-          read(fd, &buffer, 1);
-          state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer, &datasize);
-        } while (state_read != STOP_I);
-        state = ANALIZE_R;
-        break;
-      case ANALIZE_R:
-        {
-          unsigned char bcc2;
-          bcc2_destuffing(bcc_data,&bcc2);
-          int final_size;
-          unsigned char *dest_data = data_destuffing(packets, datasize, &final_size);
-          unsigned char packets_bcc;
-          bcc2_calc(dest_data, final_size,&packets_bcc);
-          if (bcc2 == packets_bcc) {
-            if (flag_answer == C_S0) {
-              frame[2] = RR_R0;
-            } else
-              frame[2] = RR_R1;
-            memcpy(packets,dest_data,final_size);
-          }
-          else {
-            if (flag_answer == C_S0)
-              frame[2] = REJ_R0;
-            else
-            frame[2] = REJ_R1;
-          }
+    case READ_R:
+      do {
+        alarm(TIMEOUT_R);
+        read(fd, &buffer, 1);
+        state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer,
+                        &datasize);
+      } while (state_read != STOP_I);
+      state = ANALIZE_R;
+      break;
+    case ANALIZE_R: {
+      unsigned char bcc2;
+      bcc2_destuffing(bcc_data, &bcc2);
+      int final_size;
+      unsigned char *dest_data =
+          data_destuffing(packets, datasize, &final_size);
+      unsigned char packets_bcc;
+      bcc2_calc(dest_data, final_size, &packets_bcc);
+      if (bcc2 == packets_bcc) {
+        if (flag_answer == C_S0) {
+          frame[2] = RR_R0;
+        } else
+          frame[2] = RR_R1;
+        memcpy(packets, dest_data, final_size);
+      } else {
+        if (flag_answer == C_S0)
+          frame[2] = REJ_R0;
+        else
+          frame[2] = REJ_R1;
+      }
 
-          frame[0] = FLAG;
-          frame[1] = A_SENDER;
-          frame[3] = bcc_calc(frame[1], frame[2]);
-          frame[4] = FLAG;
-          state = WRITE_R;
-          free(dest_data);
-          break;
-        }
-        
+      frame[0] = FLAG;
+      frame[1] = A_SENDER;
+      frame[3] = bcc_calc(frame[1], frame[2]);
+      frame[4] = FLAG;
+      state = WRITE_R;
+      free(dest_data);
+      break;
+    }
+
     case WRITE_R:
       write(fd, &frame, 5);
       if (frame[2] == REJ_R0) {
@@ -289,12 +286,11 @@ int llread(int fd, unsigned char *packets) {
           REJ1 = 0;
           alarm(TIMEOUT_R);
         }
-      } else{
+      } else {
         state = END_R;
-
       }
     case END_R:
-        break;
+      break;
     }
   }
   return strlen(packets);
@@ -330,7 +326,7 @@ int llclose(int fd, int flag) {
       while (!alrmSet && state != STOP_S) {
         alarm(TIMEOUT);
         read(fd, &buffer, 1);
-        
+
         state_machine(&state, buffer, &fields);
       }
 

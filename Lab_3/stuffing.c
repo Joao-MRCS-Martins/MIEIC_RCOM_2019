@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void bcc2_stuffing(unsigned char *bcc2, int *size, unsigned char *bcc2_stuffed) {
+void bcc2_stuffing(unsigned char *bcc2, int *size,
+                   unsigned char *bcc2_stuffed) {
   if (*bcc2 == FLAG) {
     bcc2_stuffed[0] = ESCAPE;
     bcc2_stuffed[1] = FLAG_ESC;
@@ -45,17 +46,17 @@ unsigned char *data_stuffing(unsigned char *data, int size, int *final_size) {
 
 unsigned char *data_destuffing(unsigned char *data, int size, int *final_size) {
   *final_size = size;
-  unsigned char *stuffed_data = (unsigned char *)malloc(size * sizeof(unsigned char));
+  unsigned char *stuffed_data =
+      (unsigned char *)malloc(size * sizeof(unsigned char));
 
   int sizeless = 0;
   int j = 0;
   for (int i = 0; i < size;) {
 
-    if(i == size-1) {
+    if (i == size - 1) {
       stuffed_data[j] = data[i];
       i++;
-    }
-    else {
+    } else {
       if (data[i] == ESCAPE && data[i + 1] == FLAG_ESC) {
         stuffed_data[j] = FLAG;
         i += 2;
@@ -71,12 +72,13 @@ unsigned char *data_destuffing(unsigned char *data, int size, int *final_size) {
     }
     j++;
   }
-  stuffed_data = (unsigned char *)realloc(stuffed_data, (*final_size) - sizeless);
+  stuffed_data =
+      (unsigned char *)realloc(stuffed_data, (*final_size) - sizeless);
   *final_size -= sizeless;
   return stuffed_data;
 }
 
-void bcc2_destuffing(unsigned char *bcc2_s,unsigned char *bcc2) {
+void bcc2_destuffing(unsigned char *bcc2_s, unsigned char *bcc2) {
   if (bcc2_s[0] == ESCAPE) {
 
     if (bcc2_s[1] == ESC_ESC)

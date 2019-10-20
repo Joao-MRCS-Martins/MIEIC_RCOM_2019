@@ -13,7 +13,9 @@ struct header_fields {
   unsigned char C_EXCT;
 };
 
-void state_machine(int *state, unsigned char info, struct header_fields *message);
-void state_machine_I(int *state, unsigned char info, unsigned char *packets, unsigned char *bcc_data, int *C, int *datasize);
+void state_machine(int *state, unsigned char info,
+                   struct header_fields *message);
+void state_machine_I(int *state, unsigned char info, unsigned char *packets,
+                     unsigned char *bcc_data, int *C, int *datasize);
 
 #endif
