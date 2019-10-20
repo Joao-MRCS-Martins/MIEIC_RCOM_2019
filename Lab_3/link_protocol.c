@@ -64,7 +64,7 @@ int llopen(int port, int flag) {
   }
 
   // sprintf(port_path, "/dev/ttyS%d", port);
-  sprintf(port_path, "/dev/pts/%d", port);
+  sprintf(port_path, "/dev/ttyS%d", port);
 
   fd = open(port_path, O_RDWR | O_NOCTTY);
   if (fd < 0) {
@@ -186,7 +186,8 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   n_try = 0;
   frame_size = datasize + bccsize + 5;
   do {
-    write(fd, &frame, frame_size);
+    int resu = write(fd, &frame, frame_size);
+	printf("resu %d\n", resu);
     alrmSet = FALSE;
     alarm(TIMEOUT);
     while (alrmSet != TRUE && state != STOP_S) {
@@ -194,6 +195,7 @@ int llwrite(int fd, unsigned char *buffer, int length) {
       // printf("read: %x\n",aux);
       state_machine(&state, aux, &header);
       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1)) {
+		state = 0;
         break;
       }
     }
