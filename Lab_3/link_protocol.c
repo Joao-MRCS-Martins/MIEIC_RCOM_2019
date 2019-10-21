@@ -19,8 +19,9 @@ int fd;
 int n_try = 0;
 int alrmSet = FALSE;
 int n_seq = 0;
-unsigned char frame[256];
 int frame_size = 0;
+unsigned char frame[2 * MAX_PCKT_SIZE + 6];
+  
 
 void bcc2_calc(unsigned char *message, int length, unsigned char *bcc2) {
   *bcc2 = message[0];
@@ -152,7 +153,6 @@ int llopen(int port, int flag) {
 }
 
 int llwrite(int fd, unsigned char *buffer, int length) {
-  unsigned char frame[2 * MAX_PCKT_SIZE + 6];
   struct header_fields header;
   unsigned char aux;
   int state = 0;
@@ -229,14 +229,12 @@ int llread(int fd, unsigned char *packets) {
   n_try = 0;
 
   while (state != END_R && n_try < MAX_RETRIES) {
-    switch (state) {
+	switch (state) {
     case READ_R:
       do {
         alarm(TIMEOUT_R);
         read(fd, &buffer, 1);
-        printf("we are reading %x\n", buffer);
-                          state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer,
-                        &datasize);
+        state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer,&datasize);
       } while (state_read != STOP_I);
       state = ANALIZE_R;
       break;
@@ -284,14 +282,17 @@ int llread(int fd, unsigned char *packets) {
     case WRITE_R:
       write(fd, &frame, 5);
       if (frame[2] == REJ_R0 || frame[2] == REJ_R1 || dup ==TRUE) {
-          state_read = START_S;
+          printf("rejected or duplicate\n");
+		  state_read = START_S;
           state = READ_R;
       } else {
+		printf("worked good\n");
         state = END_R;
+	  	n_seq ^= 1;
       }
       dup = FALSE;
+	  break;
     case END_R:
-      n_seq ^= 1;
       break;
     }
   }
