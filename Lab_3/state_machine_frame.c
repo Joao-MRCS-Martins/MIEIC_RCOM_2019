@@ -64,6 +64,7 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
 
   switch (*state) {
   case START_S:
+  printf("info: %x Expecting flag\n",info);
     if (info == FLAG) {
       *state = FLAG_RCV;
     } else
@@ -71,6 +72,7 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
     break;
 
   case FLAG_RCV:
+    printf("flag_rcv info %x\n", info);
     if (info == A_SENDER) {
       *state = A_RCV;
     } else if (info == FLAG)

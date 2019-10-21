@@ -187,7 +187,7 @@ int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
     printf("Failed to write data into destination file.\n");
     return DATA_PCKT;
   }
-
+  printf("nseq %d\n",N_SEQ);
   *total_read += k;
   N_SEQ = (N_SEQ + 1) % 255;
   printf("n_pacote: %d\n", ++n);

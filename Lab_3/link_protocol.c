@@ -185,7 +185,7 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   n_try = 0;
   frame_size = datasize + bccsize + 5;
   do {
-	
+
     write(fd, &frame, frame_size);
     alrmSet = FALSE;
     alarm(TIMEOUT);
@@ -234,6 +234,7 @@ int llread(int fd, unsigned char *packets) {
       do {
         alarm(TIMEOUT_R);
         read(fd, &buffer, 1);
+        printf("we are reading %x\n", buffer);
         state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer,
                         &datasize);
       } while (state_read != STOP_I);
