@@ -10,7 +10,7 @@
 #include "./link_protocol.h"
 
 unsigned char N_SEQ = 0;
-
+int n =0;
 char *getFileData(char *filename, int *file_size) {
   FILE *f;
   struct stat meta;
@@ -190,6 +190,7 @@ int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
 
   *total_read += k;
   N_SEQ = (N_SEQ + 1) % 255;
+  printf("n_pacote: %d\n", ++n);
   return 0;
 }
 

@@ -228,13 +228,13 @@ int llread(int fd, unsigned char *packets) {
   n_try = 0;
 
   while (state != END_R && n_try < MAX_RETRIES) {
-    printf("state %d", state);
+    //printf("state %d", state);
     switch (state) {
     case READ_R:
       do {
         alarm(TIMEOUT_R);
         read(fd, &buffer, 1);
-        printf("read : %x\n", buffer);
+        //printf("read : %x\n", buffer);
         state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer,
                         &datasize);
       } while (state_read != STOP_I);
@@ -289,27 +289,19 @@ int llread(int fd, unsigned char *packets) {
 
     case WRITE_R:
       write(fd, &frame, 5);
-      if (frame[2] == REJ_R0) {
+      if (frame[2] == REJ_R0 && frame[2] == REJ_R1) {
           state = READ_R;
-      } else if (frame[2] == REJ_R1) {
-        if (REJ1 < MAX_REJ) {
-          REJ1++;
-          state = READ_R;
-        } else {
-          REJ1 = 0;
-          //alarm(TIMEOUT_R);
-          //n_try++;
-          exit(0);
-        }
+
       } else {
         state = END_R;
       }
     case END_R:
+      n_seq ^= 1;
       break;
     }
   }
 
-  printf("size of packets %lu\n", strlen(packets));
+  //printf("size of packets %lu\n", strlen(packets));
   return strlen(packets);
 }
 
