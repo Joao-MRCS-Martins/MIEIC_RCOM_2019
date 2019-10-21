@@ -2,7 +2,7 @@
 #define _DEFINES_H_
 
 // HARDWARE
-#define BAUDRATE B9600
+#define BAUDRATE B38400
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define MODEMDEVICE "/dev/ttyS1"
 

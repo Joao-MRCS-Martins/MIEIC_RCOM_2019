@@ -248,12 +248,29 @@ int llread(int fd, unsigned char *packets) {
           data_destuffing(packets, datasize, &final_size);
       unsigned char packets_bcc;
       bcc2_calc(dest_data, final_size, &packets_bcc);
+
       if (bcc2 == packets_bcc) {
-        if (flag_answer == C_S0) {
-          frame[2] = RR_R0;
-        } else
+        if (flag_answer == C_S0 && n_seq == 1) 
+		{
+			frame[2] = RR_R1;
+			state = READ_R;
+		}
+		else if (flag_answer == C_S0 && n_seq == 0) 
+		{
           frame[2] = RR_R1;
+ 			memcpy(packets, dest_data, final_size);
+		}
+        else if(flag_answer == C_S1 && n_seq == 0) 
+		{
+          frame[2] = RR_R0;
+			state = READ_R;
+		}
+	      else if(flag_answer == C_S1 && n_seq == 1)
+		{
+		frame[2] = RR_R0;
+
         memcpy(packets, dest_data, final_size);
+		}
       } else {
         if (flag_answer == C_S0)
           frame[2] = REJ_R0;
@@ -273,15 +290,7 @@ int llread(int fd, unsigned char *packets) {
     case WRITE_R:
       write(fd, &frame, 5);
       if (frame[2] == REJ_R0) {
-        if (REJ0 < MAX_REJ) {
-          REJ0++;
           state = READ_R;
-        } else {
-          REJ0 = 0;
-          //alarm(TIMEOUT_R);
-          //n_try++;
-          exit();
-        }
       } else if (frame[2] == REJ_R1) {
         if (REJ1 < MAX_REJ) {
           REJ1++;
@@ -290,7 +299,7 @@ int llread(int fd, unsigned char *packets) {
           REJ1 = 0;
           //alarm(TIMEOUT_R);
           //n_try++;
-          exit();
+          exit(0);
         }
       } else {
         state = END_R;
