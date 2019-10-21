@@ -54,7 +54,7 @@
 #define END_R 3
 
 // EXECUTION SPECS
-#define MAX_RETRIES 3
+#define MAX_RETRIES 10000
 #define TIMEOUT 3
 #define TIMEOUT_R 10
 

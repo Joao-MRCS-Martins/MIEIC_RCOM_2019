@@ -36,6 +36,7 @@ void alarmHandler() {
     printf("Timeout. Exiting ...\n");
     exit(TIMEOUT_ERROR);
   } else {
+printf("frame0 %x\n", frame[0]);
     write(fd, &frame, frame_size);
     alarm(TIMEOUT);
   }
@@ -185,7 +186,7 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   n_try = 0;
   frame_size = datasize + bccsize + 5;
   do {
-	
+	printf("frame 0 %x\n", frame[0]);
     write(fd, &frame, frame_size);
     alrmSet = FALSE;
     alarm(TIMEOUT);

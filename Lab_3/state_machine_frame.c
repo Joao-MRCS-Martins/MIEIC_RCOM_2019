@@ -64,6 +64,7 @@ void state_machine_I(int *state, unsigned char info, unsigned char *packets,
 
   switch (*state) {
   case START_S:
+printf("bebeb\n");
     if (info == FLAG) {
       *state = FLAG_RCV;
     } else
