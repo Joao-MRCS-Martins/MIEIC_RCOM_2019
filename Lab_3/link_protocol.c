@@ -235,7 +235,7 @@ int llread(int fd, unsigned char *packets) {
         alarm(TIMEOUT_R);
         read(fd, &buffer, 1);
         printf("we are reading %x\n", buffer);
-        state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer,
+                          state_machine_I(&state_read, buffer, packets, bcc_data, &flag_answer,
                         &datasize);
       } while (state_read != STOP_I);
       state = ANALIZE_R;
