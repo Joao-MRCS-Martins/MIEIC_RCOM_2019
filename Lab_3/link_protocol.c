@@ -181,10 +181,11 @@ int llwrite(int fd, unsigned char *buffer, int length) {
   frame[4 + datasize + bccsize] = FLAG;
   // prepare reply processing
   header.A_EXCT = A_SENDER;
-  header.C_EXCT = (n_seq == 0) ? RR_R0 : RR_R1;
+  header.C_EXCT = (n_seq == 0) ? RR_R1 : RR_R0;
   n_try = 0;
   frame_size = datasize + bccsize + 5;
   do {
+	
     write(fd, &frame, frame_size);
     alrmSet = FALSE;
     alarm(TIMEOUT);
@@ -193,6 +194,7 @@ int llwrite(int fd, unsigned char *buffer, int length) {
       state_machine(&state, aux, &header);
       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1)) {
         state = 0;
+		printf("meias\n");
         break;
       }
     }
