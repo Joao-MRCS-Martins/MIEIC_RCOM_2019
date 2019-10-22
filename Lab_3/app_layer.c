@@ -190,7 +190,7 @@ int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
 
   *total_read += k;
   N_SEQ = (N_SEQ + 1) % 255;
-  printf("n_pacote: %d\n", ++n);
+  printf("Packet number: %d\n", ++n);
   return 0;
 }
 
@@ -248,8 +248,6 @@ int receiverApp(int port) {
       close(fd);
       return DATA_PCKT;
     }
-    // printf("N seq: %d Rcv bytes: %d bytes left:
-    // %d\n",N_SEQ,rcv_bytes,file_size-rcv_bytes);
   }
   // receive end control packet and validate with start packet
   if (checkEndInfo(fd, c_packet) < 0) {

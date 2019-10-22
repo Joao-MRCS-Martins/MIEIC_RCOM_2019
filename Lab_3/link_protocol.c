@@ -194,7 +194,6 @@ int llwrite(int fd, unsigned char *buffer, int length) {
       state_machine(&state, aux, &header);
       if ((aux == REJ_R0 && n_seq == 0) || (aux == REJ_R1 && n_seq == 1)) {
         state = 0;
-		printf("meias\n");
         break;
       }
     }
@@ -282,13 +281,12 @@ int llread(int fd, unsigned char *packets) {
     case WRITE_R:
       write(fd, &frame, 5);
       if (frame[2] == REJ_R0 || frame[2] == REJ_R1 || dup ==TRUE) {
-          printf("rejected or duplicate\n");
-		  state_read = START_S;
+          printf("Rejected/duplicate frame\n");
+		      state_read = START_S;
           state = READ_R;
       } else {
-		printf("worked good\n");
         state = END_R;
-	  	n_seq ^= 1;
+	  	  n_seq ^= 1;
       }
       dup = FALSE;
 	  break;
@@ -301,7 +299,6 @@ int llread(int fd, unsigned char *packets) {
 }
 
 int llclose(int fd, int flag) {
-  printf("close");
   int state = 0;
   unsigned char buffer;
   unsigned char frame[256];

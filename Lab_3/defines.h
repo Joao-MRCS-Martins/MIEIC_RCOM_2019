@@ -54,7 +54,7 @@
 #define END_R 3
 
 // EXECUTION SPECS
-#define MAX_RETRIES 10000
+#define MAX_RETRIES 5
 #define TIMEOUT 3
 #define TIMEOUT_R 10
 
@@ -105,22 +105,5 @@
 #define CONNECT_FAIL -9
 #define FILE_ERROR -10
 
-struct control_frame {
-  unsigned char flag_i;
-  unsigned char a;
-  unsigned char c;
-  unsigned char bcc;
-  unsigned char flag_f;
-};
-
-struct info_frame {
-  unsigned char flag_i;
-  unsigned char a;
-  unsigned char c;
-  unsigned char bcc1;
-  unsigned char data[20];
-  unsigned char bcc2[2];
-  unsigned char flag_f;
-};
 
 #endif //_DEFINES_H_

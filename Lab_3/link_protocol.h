@@ -9,7 +9,7 @@ int llwrite(int fd, unsigned char *buffer, int length);
 int llread(int fd, unsigned char *packets);
 int llclose(int fd, int flag);
 
-// helper functions
+// auxiliary functions
 void bcc2_calc(unsigned char *message, int length, unsigned char *bcc2);
 void alarmHandler();
 
