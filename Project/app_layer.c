@@ -9,6 +9,7 @@
 #include "./app_layer.h"
 #include "./link_protocol.h"
 
+int n_packets =0;
 unsigned char N_SEQ = 0;
 int n =0;
 char *getFileData(char *filename, int *file_size) {
@@ -190,7 +191,20 @@ int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
 
   *total_read += k;
   N_SEQ = (N_SEQ + 1) % 255;
-  printf("Packet number: %d\n", ++n);
+  ++n;
+  //printf("Packet number: %d\n", ++n);
+
+  system("clear");
+  char line[30];
+  printf("["); //22 tracinhos
+  for(int i = 0; i < (30*n)/n_packets; i++)
+  {
+    strcpy(&line[i] , "-");
+  }
+  printf("%s", line);
+  printf("] \n");
+
+
   return 0;
 }
 
@@ -231,6 +245,7 @@ int receiverApp(int port) {
     return STRT_PCKT;
   }
 
+  n_packets = file_size / MAX_PCKT_SIZE;
   // open/create file indicated in start control packet
   int dest_fd = open(filename, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC);
   if (dest_fd < 0) {

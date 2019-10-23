@@ -21,7 +21,9 @@ int alrmSet = FALSE;
 int n_seq = 0;
 int frame_size = 0;
 unsigned char frame[2 * MAX_PCKT_SIZE + 6];
-  
+int n_retrans = 0;
+int n_dups = 0;
+
 
 void bcc2_calc(unsigned char *message, int length, unsigned char *bcc2) {
   *bcc2 = message[0];
@@ -281,6 +283,9 @@ int llread(int fd, unsigned char *packets) {
     case WRITE_R:
       write(fd, &frame, 5);
       if (frame[2] == REJ_R0 || frame[2] == REJ_R1 || dup ==TRUE) {
+          if(dup) n_dups++;
+          else
+            n_retrans++;
           printf("Rejected/duplicate frame\n");
 		      state_read = START_S;
           state = READ_R;
@@ -391,7 +396,13 @@ int llclose(int fd, int flag) {
       read(fd, &buffer, 1);
       state_machine(&state, buffer, &fields);
     }
+
+    printf("Number of retransmited frames: %d \n", n_retrans);
+    printf("Number of duplicated frames: %d \n", n_dups);
+
   }
+
+
   printf("Successfully closed link.\n");
   sleep(1);
   if (tcsetattr(fd, TCSANOW, &oldtio) == -1) {
