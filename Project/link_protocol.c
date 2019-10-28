@@ -369,7 +369,7 @@ int llclose(int fd, int flag) {
 
     signal(SIGALRM, alarmHandlerR);
 
-    printf("Reading DISC.\n");
+    printf("\nReading DISC.\n");
 
     while (state != STOP_S) {
       alarm(TIMEOUT_R);

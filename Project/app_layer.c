@@ -188,21 +188,25 @@ int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
     printf("Failed to write data into destination file.\n");
     return DATA_PCKT;
   }
+  
+  for(int i =0; i <38;i++)
+   printf("\b");
+  printf("[");
+  for(int i = 0; i < 30; i++) {
+    if(i < (30*n/n_packets))
+        printf("-");
+    else
+        printf(" ");
+  }
+ // printf("]%.1f%%",(double)n/n_packets*100);
+  fflush(stdout);
 
   *total_read += k;
   N_SEQ = (N_SEQ + 1) % 255;
   ++n;
   //printf("Packet number: %d\n", ++n);
 
-  system("clear");
-  char line[30];
-  printf("["); //22 tracinhos
-  for(int i = 0; i < (30*n)/n_packets; i++)
-  {
-    strcpy(&line[i] , "-");
-  }
-  printf("%s", line);
-  printf("] \n");
+  
 
 
   return 0;
