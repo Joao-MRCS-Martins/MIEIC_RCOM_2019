@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "./app_layer.h"
 #include "./link_protocol.h"
@@ -12,6 +13,23 @@
 int n_packets =0;
 unsigned char N_SEQ = 0;
 int n =0;
+
+void progressBar() {
+  usleep(50000);
+  for(int i =0; i <38;i++)
+    printf("\b");
+  
+  printf("[");
+  for(int i = 0; i < 30; i++) {
+    if(i < (30*n/n_packets))
+        printf("-");
+    else
+        printf(" ");
+  }
+  printf("]%.1f%%",(double)n/n_packets*100);
+  fflush(stdout);
+}
+
 char *getFileData(char *filename, int *file_size) {
   FILE *f;
   struct stat meta;
@@ -188,26 +206,12 @@ int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
     printf("Failed to write data into destination file.\n");
     return DATA_PCKT;
   }
-  
-  for(int i =0; i <38;i++)
-   printf("\b");
-  printf("[");
-  for(int i = 0; i < 30; i++) {
-    if(i < (30*n/n_packets))
-        printf("-");
-    else
-        printf(" ");
-  }
- // printf("]%.1f%%",(double)n/n_packets*100);
-  fflush(stdout);
 
   *total_read += k;
   N_SEQ = (N_SEQ + 1) % 255;
   ++n;
-  //printf("Packet number: %d\n", ++n);
 
-  
-
+  progressBar();
 
   return 0;
 }
@@ -249,7 +253,8 @@ int receiverApp(int port) {
     return STRT_PCKT;
   }
 
-  n_packets = file_size / MAX_PCKT_SIZE;
+  n_packets = ceil((double)file_size / MAX_PCKT_SIZE);
+
   // open/create file indicated in start control packet
   int dest_fd = open(filename, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC);
   if (dest_fd < 0) {
@@ -259,6 +264,7 @@ int receiverApp(int port) {
   }
 
   // receive packets and process them into file data
+  printf("Progress:\n");
   int rcv_bytes = 0;
   while (rcv_bytes != file_size) {
     if (getPacketInfo(fd, dest_fd, &rcv_bytes) < 0) {
