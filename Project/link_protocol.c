@@ -286,7 +286,7 @@ int llread(int fd, unsigned char *packets) {
           if(dup) n_dups++;
           else
             n_retrans++;
-          printf("Rejected/duplicate frame\n");
+          printf(" Rejected/duplicate frame\n");
 		      state_read = START_S;
           state = READ_R;
       } else {

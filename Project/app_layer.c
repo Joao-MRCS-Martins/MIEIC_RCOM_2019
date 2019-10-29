@@ -210,7 +210,6 @@ int getPacketInfo(int port_fd, int dest_fd, int *total_read) {
   *total_read += k;
   N_SEQ = (N_SEQ + 1) % 255;
   ++n;
-
   progressBar();
 
   return 0;
@@ -253,7 +252,7 @@ int receiverApp(int port) {
     return STRT_PCKT;
   }
 
-  n_packets = ceil((double)file_size / MAX_PCKT_SIZE);
+  n_packets = ceil((double)file_size / (MAX_PCKT_SIZE-4)); // minus 4 comes from packet header
 
   // open/create file indicated in start control packet
   int dest_fd = open(filename, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC);

@@ -9,7 +9,7 @@ OBJ = link_protocol.o state_machine_frame.o stuffing.o app_layer.o
 	$(CC) -c -g -lm -o $@ $< $(CFLAGS)
 
 link: $(OBJ)
-	$(CC) -g -lm -o $@ $^ $(CFLAGS)
+	$(CC) -g -o $@ $^ $(CFLAGS) -lm
 
 clean:
 	rm -f *.o link
