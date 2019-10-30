@@ -15,16 +15,15 @@ unsigned char N_SEQ = 0;
 int n =0;
 
 void progressBar() {
-  usleep(50000);
   for(int i =0; i <38;i++)
     printf("\b");
   
   printf("[");
   for(int i = 0; i < 30; i++) {
     if(i < (30*n/n_packets))
-        printf("-");
+        printf("#");
     else
-        printf(" ");
+        printf("-");
   }
   printf("]%.1f%%",(double)n/n_packets*100);
   fflush(stdout);
@@ -45,6 +44,8 @@ char *getFileData(char *filename, int *file_size) {
   }
 
   *file_size = meta.st_size;
+  n_packets = ceil((double)*file_size/(MAX_PCKT_SIZE-4));
+
   char *file_data = (char *)malloc(*file_size);
 
   fread(file_data, sizeof(char), *file_size, f);
@@ -129,6 +130,8 @@ int senderApp(int port, char *file) {
       free(data);
       return DATA_PCKT;
     }
+    n++;
+    progressBar();
   }
   // send end control packet
   c_packet[0] = C_END;
