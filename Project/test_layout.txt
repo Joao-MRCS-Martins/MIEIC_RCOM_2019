@@ -8,3 +8,79 @@ Retransmited:
 Replicated :
 Time:
 Final state:
+
+
+Ficheiro 1
+pinguim.gif
+11kB
+
+T1: Sem interferência.
+Local de teste: Laboratório de RCOM
+Retransmitidos: 0
+Replicados: 0
+Tempo: 4026.767 miliseconds
+BAUDRATE: B38400
+Estado final: Imagem passou
+
+T2: Sem interferência.
+Local de teste: Laboratório de RCOM
+Retransmitidos: 0
+Replicados: 0
+Tempo: 4026.190 miliseconds
+BAUDRATE: B38400
+Estado final: Imagem passou
+
+T3: Sem interferência.
+Local de teste: Laboratório de RCOM
+Retransmitidos: 0
+Replicados: 0
+Tempo: 4025.992 miliseconds
+BAUDRATE: B38400
+Estado final: Imagem passou
+
+T4: Porta interrompida duas vezes.
+Local de teste: Laboratório de RCOM
+Retransmitidos: 2
+Replicados: 2
+Tempo: 4025.992 miliseconds
+BAUDRATE: B38400
+Estado final: Imagem passou
+
+
+Ficheiro 2
+lig_dados_desempenho.pdf
+630kB
+
+T1: Sem interferência.
+Local de teste: Laboratório de RCOM
+Retransmitidos: 0
+Replicados: 0
+Tempo: 173489.587 miliseconds
+BAUDRATE: B38400
+Estado final: pdf passou
+
+T2: Uso intensivo de chave de fendas nos pinos da porta de série.
+Local de teste: Laboratório de RCOM
+Retransmitidos: 25
+Replicados: 9
+Tempo: 198917.888 miliseconds
+BAUDRATE: B38400
+Estado final: pdf passou
+
+T3: Sem interferência.
+Local de teste: Laboratório de RCOM
+Retransmitidos: 0
+Replicados: 0
+Tempo: 116066.007 miliseconds
+BAUDRATE: B57600
+Estado final: pdf passou
+
+T4: Sem interferência.
+Local de teste: Laboratório de RCOM
+Retransmitidos: 0
+Replicados: 0
+Tempo: 58641.320 miliseconds
+BAUDRATE: B115200
+Estado final: pdf passou
+
+
