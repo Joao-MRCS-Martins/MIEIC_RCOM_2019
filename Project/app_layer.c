@@ -6,9 +6,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <math.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "./app_layer.h"
 #include "./link_protocol.h"
+
+struct timeval stop, start;
 
 int n_packets =0;
 unsigned char N_SEQ = 0;
@@ -17,7 +21,7 @@ int n =0;
 void progressBar() {
   for(int i =0; i <38;i++)
     printf("\b");
-  
+
   printf("[");
   for(int i = 0; i < 30; i++) {
     if(i < (30*n/n_packets))
@@ -293,6 +297,7 @@ int receiverApp(int port) {
 }
 
 int main(int argc, char *argv[]) {
+  gettimeofday(&start, NULL);
 
   if (argc != 4 && argc != 3) {
     printf("Wrong number of arguments. Usage: ./link "
@@ -310,7 +315,10 @@ int main(int argc, char *argv[]) {
   int actor = atoi(argv[1]);
   printf("actor: %d\n", actor);
   if (actor == TRANSMITTER) {
-    return senderApp(port, argv[3]);
+    int retVal = senderApp(port, argv[3]);
+    gettimeofday(&stop, NULL);
+    printf("Duration MS %'.3f\n", (double) (stop.tv_sec - start.tv_sec) * 1000 + (double) (stop.tv_usec - start.tv_usec) / 1000);
+    return retVal;
   } else if (actor == RECEIVER) {
     return receiverApp(port);
   } else {
