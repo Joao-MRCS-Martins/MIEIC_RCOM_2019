@@ -105,5 +105,6 @@
 #define CONNECT_FAIL -9
 #define FILE_ERROR -10
 
+#define ERROR_RATIO 40
 
 #endif //_DEFINES_H_

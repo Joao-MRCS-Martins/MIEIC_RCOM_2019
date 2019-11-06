@@ -24,12 +24,20 @@ unsigned char frame[2 * MAX_PCKT_SIZE + 6];
 int n_retrans = 0;
 int n_dups = 0;
 
+int error_or_not(int probability){
+  time_t t;
+  srand((unsigned) time(&t));
+  if((rand()%100) <= probability) return TRUE;
+  else return FALSE;
+}
 
 void bcc2_calc(unsigned char *message, int length, unsigned char *bcc2) {
   *bcc2 = message[0];
   for (int i = 1; i < length; i++) {
     *bcc2 ^= message[i];
   }
+
+  if(error_or_not(ERROR_RATIO) == TRUE) *bcc2 ^= message[0]; 
 }
 
 void alarmHandler() {
@@ -50,7 +58,12 @@ void alarmHandlerR() {
   exit(TIMEOUT_ERROR);
 }
 
-unsigned char bcc_calc(unsigned char a, unsigned char c) { return a ^ c; }
+unsigned char bcc_calc(unsigned char a, unsigned char c) { 
+  if(error_or_not(ERROR_RATIO) == FALSE) 
+    return a ^ c; 
+  else 
+    return a ^ c ^ a;
+  }
 
 int llopen(int port, int flag) {
   char port_path[MAX_BUFF];
