@@ -175,6 +175,25 @@ int getServResp(char *reply) {
   return atoi(code);
 }
 
+int readResponse(int socketFd){
+  char repl2[MAX_LENGTH] = "";
+  
+  while(repl2[3] != ' '){
+    memset(repl2, 0, MAX_LENGTH);
+    if(read(socketFd,repl2,MAX_LENGTH) <=0) {
+      printf("Failed to read server response");
+      return -1;
+    }
+  }
+  
+  return getServResp(repl2);
+}
+
+
+
+
+
+
 int main(int argc, char** argv){
   if(argc != 2) {
     printf("Wrong arguments. Usage: ./download ftp://[<user>:<password>@]<host>/<url-path>\n");
@@ -200,11 +219,12 @@ int main(int argc, char** argv){
   }
   printValue(ip_addr,IP_ADDR);
   
-  ///////////////////////////////clientTCP.c///////////////////////////////////////////////////7
+  ///////////////////////////////clientTCP.c///////////////////////////////////////////////////
 	int	sockfd;
 	struct	sockaddr_in server_addr;
 	char	buf[MAX_LENGTH] = "";  
 	int	bytes;
+  int resp_code;
 	
 	/*server address handling*/
 	bzero((char*)&server_addr,sizeof(server_addr));
@@ -225,28 +245,18 @@ int main(int argc, char** argv){
 		exit(0);
 	}
 
-  char reply[MAX_LENGTH] = "";
-  if(read(sockfd,reply,MAX_LENGTH) <0) {
-    printf("Failed to read server response");
-    return -1;
-  }
-  //printf("reply: %s",reply);
-  int reply_code = getServResp(reply);
-  printf("code: %d\n",reply_code);
+  resp_code = readResponse(sockfd);
+  printf("resp_code: %d\n", resp_code);
 
   int n; 
   if((n=sendSocketCommand(sockfd,USER,user)) <0) {
     printf("Failed to send socket command.\n");
     return -1;
   }
-  char repl2[MAX_LENGTH] = "";
-  if(read(sockfd,repl2,MAX_LENGTH) <=0) {
-    printf("Failed to read server response");
-    return -1;
-  }
-  printf("reply2: %s",repl2);
-  reply_code = getServResp(repl2);
-  printf("reply code: %d\n",reply_code);
+
+  resp_code = readResponse(sockfd);
+  printf("resp_code: %d\n", resp_code);
+  
 
 	close(sockfd);
 	exit(0);
