@@ -10,12 +10,16 @@
 #include <string.h>
 #include <regex.h>
 
-#define SERVER_PORT 6000
-#define SERVER_ADDR "192.168.28.96"
+#define SERVER_PORT 21
 
 #define MAX_LENGTH 100
 #define FILENAME "Filename"
 #define IP_ADDR "IP Address"
+#define CRLF "\n"
+#define USER "user"
+#define PASS "PASS"
+#define PASV "PASV"
+#define RETR "RETR"
 
 void printArgs(char *user, char* pass, char* host, char* path) {
   if(strcmp(user,"") != 0) {
@@ -154,8 +158,24 @@ int getip(char* host,char* ip_addr) {
 }
 //////////////////////////////////////////////////////////////////////
 
-int main(int argc, char** argv){
+int sendSocketCommand(int socketfd,char *cmd, char* arg) {
+  char command[MAX_LENGTH]="";
+  sprintf(command,"%s",cmd);
+  if(strcmp(arg,"") != 0) {
+    sprintf(command,"%s %s",command,arg);
+  }
 
+  strcat(command,CRLF);
+  return send(socketfd,command,strlen(command),0);
+} 
+
+int getServResp(char *reply) {
+  char code[3];
+  strncpy(code,reply,3);
+  return atoi(code);
+}
+
+int main(int argc, char** argv){
   if(argc != 2) {
     printf("Wrong arguments. Usage: ./download ftp://[<user>:<password>@]<host>/<url-path>\n");
     return -1;
@@ -179,36 +199,55 @@ int main(int argc, char** argv){
     return -1;
   }
   printValue(ip_addr,IP_ADDR);
-
-  return 0;
+  
   ///////////////////////////////clientTCP.c///////////////////////////////////////////////////7
-	// int	sockfd;
-	// struct	sockaddr_in server_addr;
-	// char	buf[] = "Mensagem de teste na travessia da pilha TCP/IP\n";  
-	// int	bytes;
+	int	sockfd;
+	struct	sockaddr_in server_addr;
+	char	buf[MAX_LENGTH] = "";  
+	int	bytes;
 	
-	// /*server address handling*/
-	// bzero((char*)&server_addr,sizeof(server_addr));
-	// server_addr.sin_family = AF_INET;
-	// server_addr.sin_addr.s_addr = inet_addr(SERVER_ADDR);	/*32 bit Internet address network byte ordered*/
-	// server_addr.sin_port = htons(SERVER_PORT);		/*server TCP port must be network byte ordered */
+	/*server address handling*/
+	bzero((char*)&server_addr,sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_addr.s_addr = inet_addr(ip_addr);	/*32 bit Internet address network byte ordered*/
+	server_addr.sin_port = htons(SERVER_PORT);		/*server TCP port must be network byte ordered */
     
-	// /*open an TCP socket*/
-	// if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0) {
-  //   		perror("socket()");
-  //       	exit(0);
-  //   	}
-	// /*connect to the server*/
-  //   	if(connect(sockfd, 
-	//            (struct sockaddr *)&server_addr, 
-	// 	   sizeof(server_addr)) < 0){
-  //       	perror("connect()");
-	// 	exit(0);
-	// }
-  //   	/*send a string to the server*/
-	// bytes = write(sockfd, buf, strlen(buf));
-	// printf("Bytes escritos %d\n", bytes);
+	/*open an TCP socket*/
+	if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0) {
+    		perror("socket()");
+        	exit(0);
+    	}
+	/*connect to the server*/
+    	if(connect(sockfd, 
+	           (struct sockaddr *)&server_addr, 
+		   sizeof(server_addr)) < 0){
+        	perror("connect()");
+		exit(0);
+	}
 
-	// close(sockfd);
-	// exit(0);
+  char reply[MAX_LENGTH] = "";
+  if(read(sockfd,reply,MAX_LENGTH) <0) {
+    printf("Failed to read server response");
+    return -1;
+  }
+  //printf("reply: %s",reply);
+  int reply_code = getServResp(reply);
+  printf("code: %d\n",reply_code);
+
+  int n; 
+  if((n=sendSocketCommand(sockfd,USER,user)) <0) {
+    printf("Failed to send socket command.\n");
+    return -1;
+  }
+  char repl2[MAX_LENGTH] = "";
+  if(read(sockfd,repl2,MAX_LENGTH) <=0) {
+    printf("Failed to read server response");
+    return -1;
+  }
+  printf("reply2: %s",repl2);
+  reply_code = getServResp(repl2);
+  printf("reply code: %d\n",reply_code);
+
+	close(sockfd);
+	exit(0);
 }
