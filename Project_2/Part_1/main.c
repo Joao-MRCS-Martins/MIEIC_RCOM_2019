@@ -21,6 +21,14 @@
 #define PASV "PASV"
 #define RETR "RETR"
 
+#define SRV_OK 220
+#define NOT_LOGGED 530
+#define USER_OK 331
+#define LOGGED_IN 230
+#define WRG_CMD 503
+#define PASV_OK 227
+
+
 void printArgs(char *user, char* pass, char* host, char* path) {
   if(strcmp(user,"") != 0) {
     printf(">User: %s\n",user);
@@ -170,29 +178,37 @@ int sendSocketCommand(int socketfd,char *cmd, char* arg) {
 } 
 
 int getServResp(char *reply) {
-  char code[3];
+  char code[4] = " ";
   strncpy(code,reply,3);
   return atoi(code);
 }
 
 int readResponse(int socketFd){
   char repl2[MAX_LENGTH] = "";
-  
-  while(repl2[3] != ' '){
-    memset(repl2, 0, MAX_LENGTH);
-    if(read(socketFd,repl2,MAX_LENGTH) <=0) {
+  char b;
+  int i = 0;
+  while(1){
+    if(read(socketFd,&b,1) <0) {
       printf("Failed to read server response");
       return -1;
     }
+    if(b == '\n') {
+      repl2[i] = b;
+      if(repl2[3] == ' ') {
+        return getServResp(repl2);
+      }
+      else {
+        memset(repl2,0,MAX_LENGTH);
+        i = 0;
+      }
+    }
+    else {
+      repl2[i] = b;
+      i++;
+    }
+    printf("%c",b);
   }
-  
-  return getServResp(repl2);
 }
-
-
-
-
-
 
 int main(int argc, char** argv){
   if(argc != 2) {
@@ -236,27 +252,57 @@ int main(int argc, char** argv){
 	if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0) {
     		perror("socket()");
         	exit(0);
-    	}
+  }
 	/*connect to the server*/
-    	if(connect(sockfd, 
-	           (struct sockaddr *)&server_addr, 
-		   sizeof(server_addr)) < 0){
-        	perror("connect()");
+  if(connect(sockfd, (struct sockaddr *)&server_addr,sizeof(server_addr)) < 0) {
+    perror("connect()");
 		exit(0);
 	}
-
+  
   resp_code = readResponse(sockfd);
-  printf("resp_code: %d\n", resp_code);
+  if(resp_code != SRV_OK) {
+    printf("Service not ready.Response code: %d\n",resp_code);
+    return -1;
+  }
 
-  int n; 
-  if((n=sendSocketCommand(sockfd,USER,user)) <0) {
+  if(strcmp(user,"") == 0) {
+    strcpy(user,"anonymous");
+    strcpy(pass,"cebolas");
+  }
+
+  if(sendSocketCommand(sockfd,USER,user) <0) {
     printf("Failed to send socket command.\n");
     return -1;
   }
 
   resp_code = readResponse(sockfd);
-  printf("resp_code: %d\n", resp_code);
+  if(resp_code != USER_OK) {
+    printf("Log in failed. Response code: %d\n",resp_code);
+    return -1;
+  }
+
+  if(sendSocketCommand(sockfd,PASS,pass) <0) {
+    printf("Failed to send socket command.\n");
+    return -1;
+  }
+
+  resp_code = readResponse(sockfd);
+  if(resp_code != LOGGED_IN) {
+    printf("Log in failed. Response code: %d\n",resp_code);
+    return -1;
+  }
+
+  if(sendSocketCommand(sockfd,PASV,"") <0) {
+    printf("Failed to send socket command.\n");
+    return -1;
+  }
   
+  //read code and get SERVER PORT
+  //server_addr.sin_port = htons(SERVER_PORT);
+
+  //create new socket and connect
+  //send RETR command
+  //Interpret and download/create file
 
 	close(sockfd);
 	exit(0);
