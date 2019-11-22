@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
@@ -28,6 +29,14 @@
 #define WRG_CMD 503
 #define PASV_OK 227
 
+void progress(int read) {
+  for(int i =0; i <=50;i++)
+    printf("\b");
+
+  printf(">Bytes read: %d", read);
+  
+  fflush(stdout);
+}
 
 void printArgs(char *user, char* pass, char* host, char* path) {
   if(strcmp(user,"") != 0) {
@@ -206,8 +215,100 @@ int readResponse(int socketFd){
       repl2[i] = b;
       i++;
     }
-    printf("%c",b);
+    //printf("%c",b);
   }
+}
+
+int getPort(int part1,int part2) {
+  return part1 * 256 + part2;
+}
+
+void parsePort(char *codes,int * port) {
+  char port_part1 [5] = "";
+  char port_part2 [5]= "";
+  int i = 0;
+
+  char *ptr = strtok(codes,",");
+  while(ptr != NULL) {
+    if (i == 4) {
+      strcpy(port_part1,ptr);
+    }
+    else if( i == 5) {
+      strcpy(port_part2,ptr);
+    }
+    ptr = strtok(NULL,",");
+    i++;
+  }
+
+  *port = getPort(atoi(port_part1),atoi(port_part2));
+}
+
+int readPassiveResponse(int socketFd,int *port){
+  char repl2[MAX_LENGTH] = "";
+  char code[4] = "";
+  char b;
+  int i = 0;
+  int state = 0;
+  
+  while(1){
+    if(read(socketFd,&b,1) <0) {
+      printf("Failed to read server response");
+      return -1;
+    }
+    switch(state) {
+      case 0:
+        if(b == '(') {
+          state = 1;
+          i = 0;
+        }
+        else if( i < 3) {
+          code[i] = b;
+          i++;
+        }
+        break;
+      case 1:
+        if(b == ')') {
+          parsePort(repl2,port);
+          state = 2;
+        }
+        else {
+          repl2[i] = b;
+          i++;
+        }
+        break;
+      case 2:
+        if(b == '\n') {
+          return atoi(code);
+        }
+        break;
+    }
+  }
+}
+
+int downloadFile(int retr_sockfd, char *filename){
+
+  FILE * fPtr; 
+  if((fPtr = fopen(filename, "w+")) == NULL){
+    return -1;
+  } 
+  
+  char buffer;
+  int readBytes = 0;
+  
+  while(1){
+    int a;
+    if((a = read(retr_sockfd, &buffer, 1)) < 0) return -1;
+    if(a == 0){
+       break;
+    }
+    readBytes++;
+
+    progress(readBytes);
+    fputc(buffer, fPtr);
+  }
+
+  fclose(fPtr);
+  return 0;
 }
 
 int main(int argc, char** argv){
@@ -237,6 +338,7 @@ int main(int argc, char** argv){
   
   ///////////////////////////////clientTCP.c///////////////////////////////////////////////////
 	int	sockfd;
+  int retr_sockfd;
 	struct	sockaddr_in server_addr;
 	char	buf[MAX_LENGTH] = "";  
 	int	bytes;
@@ -267,7 +369,8 @@ int main(int argc, char** argv){
 
   if(strcmp(user,"") == 0) {
     strcpy(user,"anonymous");
-    strcpy(pass,"cebolas");
+    char easter[] = {79,32,74,79,71,79,0};
+    strcpy(pass,easter);
   }
 
   if(sendSocketCommand(sockfd,USER,user) <0) {
@@ -275,12 +378,15 @@ int main(int argc, char** argv){
     return -1;
   }
 
+  
   resp_code = readResponse(sockfd);
   if(resp_code != USER_OK) {
     printf("Log in failed. Response code: %d\n",resp_code);
     return -1;
   }
 
+  printf(">User: %s\n",user);
+  
   if(sendSocketCommand(sockfd,PASS,pass) <0) {
     printf("Failed to send socket command.\n");
     return -1;
@@ -292,18 +398,45 @@ int main(int argc, char** argv){
     return -1;
   }
 
+  printf(">Password: %s\n",pass);
+
   if(sendSocketCommand(sockfd,PASV,"") <0) {
     printf("Failed to send socket command.\n");
     return -1;
   }
   
-  //read code and get SERVER PORT
-  //server_addr.sin_port = htons(SERVER_PORT);
+  int port;
+  resp_code = readPassiveResponse(sockfd,&port);
+  if(resp_code != PASV_OK) {
+    printf("Failed to enter passive mode. Response code: %d\n",resp_code);
+    return -1;
+  }
+  printf(">Access port: %d\n",port);
 
-  //create new socket and connect
-  //send RETR command
-  //Interpret and download/create file
+  server_addr.sin_port = htons(port);
+  if ((retr_sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0) {
+    		perror("socket()");
+        	exit(0);
+  }
+	/*connect to the server*/
+  if(connect(retr_sockfd, (struct sockaddr *)&server_addr,sizeof(server_addr)) < 0) {
+    perror("connect()");
+		exit(0);
+	}
+  
+  if(sendSocketCommand(sockfd,RETR,path) <0) {
+    printf("Failed to send socket command.\n");
+    return -1;
+  }
 
+  printf(">Downloading file %s\n", filename);
+  if(downloadFile(retr_sockfd,filename) <0) {
+    printf("Failed to download file: %s\n",filename);
+    return -1;
+  }
+  printf("\n>Finished downloading %s\n", filename);
+
+  close(retr_sockfd);
 	close(sockfd);
 	exit(0);
 }
