@@ -21,6 +21,7 @@
 #define PASS "PASS"
 #define PASV "PASV"
 #define RETR "RETR"
+#define QUIT "QUIT"
 
 #define SRV_OK 220
 #define NOT_LOGGED 530
@@ -28,6 +29,9 @@
 #define LOGGED_IN 230
 #define WRG_CMD 503
 #define PASV_OK 227
+#define FILE_OK 150
+#define DWLD_OK 226
+#define QUIT_OK 221
 
 void progress(int read) {
   for(int i =0; i <=50;i++)
@@ -429,12 +433,38 @@ int main(int argc, char** argv){
     return -1;
   }
 
+  resp_code = readResponse(sockfd);
+  if(resp_code != FILE_OK) {
+    printf("File status failed. Response code: %d\n",resp_code);
+    return -1;
+  }
+
   printf(">Downloading file %s\n", filename);
   if(downloadFile(retr_sockfd,filename) <0) {
     printf("Failed to download file: %s\n",filename);
     return -1;
   }
+  
+  resp_code = readResponse(sockfd);
+  if(resp_code != DWLD_OK) {
+    printf("Download failed. Response code: %d\n",resp_code);
+    return -1;
+  }
+
   printf("\n>Finished downloading %s\n", filename);
+
+  if(sendSocketCommand(sockfd,QUIT,"") <0) {
+    printf("Failed to send socket command.\n");
+    return -1;
+  }
+
+  resp_code = readResponse(sockfd);
+  if(resp_code != QUIT_OK) {
+    printf("Quit failed. Response code: %d\n",resp_code);
+    return -1;
+  }
+
+  printf(">Quitting...\n");
 
   close(retr_sockfd);
 	close(sockfd);
